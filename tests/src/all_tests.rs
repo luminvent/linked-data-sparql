@@ -1,0 +1,10 @@
+mod test_complex_struct;
+mod test_enum;
+mod test_enum_blank_node;
+mod test_enum_type;
+mod test_struct;
+mod test_struct_flatten;
+mod test_struct_graph;
+mod test_struct_id;
+mod test_struct_type;
+mod test_struct_vec;

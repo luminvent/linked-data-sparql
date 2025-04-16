@@ -1,0 +1,15 @@
+[package]
+name = "linked-data-sparql-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+linked-data-sparql = { path = ".." }
+iref.workspace = true
+spargebra.workspace = true
+linked-data-next = "0.1.5"
+oxttl = "0.1.7"
+oxigraph = "0.4.9"
+langtag = "0.4.0"
+rdf-types = "0.22.5"
