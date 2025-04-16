@@ -1,0 +1,26 @@
+[workspace.package]
+license = "MIT"
+edition = "2024"
+version = "0.0.1"
+
+[workspace]
+members = ["derive", "tests"]
+
+[package]
+name = "linked-data-sparql"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "SPARQL query generation for linked data"
+readme = "README.md"
+
+[workspace.dependencies]
+iref = "3"
+spargebra = "0.3"
+xsd-types = "0.9"
+
+[dependencies]
+spargebra.workspace = true
+linked-data-sparql-derive = { path = "derive" }
+sparopt = "0.2"
+xsd-types.workspace = true

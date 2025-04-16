@@ -1,0 +1,15 @@
+[package]
+name = "linked-data-sparql-derive"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+linked-data-core = "0.1"
+proc-macro-error = "1"
+proc-macro2 = "1"
+syn = { version = "2", features = ["visit"] }
+quote = "1"
