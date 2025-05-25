@@ -1,4 +1,5 @@
 mod test_complex_struct;
+mod test_datatypes;
 mod test_enum;
 mod test_enum_blank_node;
 mod test_enum_type;

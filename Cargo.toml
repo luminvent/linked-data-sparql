@@ -16,11 +16,13 @@ description = "SPARQL query generation for linked data"
 [workspace.dependencies]
 iref = "3"
 spargebra = "0.3"
+xsd-types = "0.9"
 
 [dependencies]
 spargebra.workspace = true
 linked-data-sparql-derive = { path = "derive" }
 sparopt = "0.2"
+xsd-types.workspace = true
 
 
 [patch.crates-io]

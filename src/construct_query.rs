@@ -114,11 +114,30 @@ impl ToConstructQuery for Variable {
   }
 }
 
-impl ToConstructQuery for String {
-  fn to_query_with_binding(_: Variable) -> ConstructQuery {
-    ConstructQuery::default()
-  }
+macro_rules! to_construct_query_datatypes {
+    ($($t:ty),*) => {
+        $(
+            impl ToConstructQuery for $t {
+                fn to_query_with_binding(_: Variable) -> ConstructQuery {
+                    ConstructQuery::default()
+                }
+            }
+        )*
+    };
 }
+
+to_construct_query_datatypes!(
+  u8,
+  u16,
+  u32,
+  u64,
+  i8,
+  i16,
+  i32,
+  i64,
+  String,
+  xsd_types::DateTime
+);
 
 impl Join for ConstructQuery {
   fn join(mut self, other: Self) -> Self {
