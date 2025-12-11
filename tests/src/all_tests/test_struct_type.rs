@@ -22,7 +22,7 @@ fn test_struct_type() {
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
 
-  let dataset = store.query(StructType::sparql_algebra()).unwrap();
+  let dataset = store.query(StructType::sparql_query_algebra()).unwrap();
 
   let resource = Blank::new().next(&mut ()).into_term();
 

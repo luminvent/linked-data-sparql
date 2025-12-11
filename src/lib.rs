@@ -16,22 +16,19 @@
 //! let _string_sparql_query = Person::sparql_query();
 //! ```
 
-mod and;
 mod construct_query;
-mod join;
 pub mod sparql_graph_store;
 mod sparql_query;
 mod to_construct_query;
-mod union;
 
 pub mod rdf_type_conversions;
 
-pub use crate::and::And;
 pub use crate::construct_query::ConstructQuery;
-pub use crate::join::Join;
 pub use crate::sparql_query::SparqlQuery;
 pub use crate::to_construct_query::ToConstructQuery;
-pub use crate::union::Union;
+pub use construct_query::and::And;
+pub use construct_query::join::Join;
+pub use construct_query::union::Union;
 pub use linked_data_sparql_derive::Sparql;
 use spargebra::Query;
 use spargebra::term::{NamedNode, Variable};
@@ -44,7 +41,7 @@ impl<T> SparqlQuery for T
 where
   T: ToConstructQuery,
 {
-  fn sparql_algebra() -> Query {
+  fn sparql_query_algebra() -> Query {
     Self::to_query().into()
   }
 }

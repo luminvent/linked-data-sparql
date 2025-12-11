@@ -83,7 +83,7 @@ fn test_complex_struct() {
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
 
-  let dataset = store.query(ComplexStruct::sparql_algebra()).unwrap();
+  let dataset = store.query(ComplexStruct::sparql_query_algebra()).unwrap();
 
   let resource = <rdf_types::Term as rdf_types::FromIri>::from_iri(id);
 

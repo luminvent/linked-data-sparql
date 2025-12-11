@@ -27,7 +27,7 @@ fn test_struct_id() {
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
 
-  let dataset = store.query(StructId::sparql_algebra()).unwrap();
+  let dataset = store.query(StructId::sparql_query_algebra()).unwrap();
 
   let resource = <rdf_types::Term as rdf_types::FromIri>::from_iri(id);
 
@@ -54,7 +54,7 @@ fn test_struct_id_multiple() {
   store.insert(&expected_1).unwrap();
   store.insert(&expected_2).unwrap();
 
-  let dataset = store.query(StructId::sparql_algebra()).unwrap();
+  let dataset = store.query(StructId::sparql_query_algebra()).unwrap();
 
   let resource_1 = <rdf_types::Term as rdf_types::FromIri>::from_iri(id_1);
 

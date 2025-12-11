@@ -1,10 +1,14 @@
-use crate::and::And;
-use crate::join::Join;
 use crate::to_construct_query::ToConstructQuery;
-use crate::union::Union;
+use and::And;
+use join::Join;
 use spargebra::Query;
 use spargebra::algebra::{Expression, GraphPattern};
 use spargebra::term::{NamedNode, NamedNodePattern, TermPattern, TriplePattern, Variable};
+use union::Union;
+
+pub mod and;
+pub mod join;
+pub mod union;
 
 #[derive(Default)]
 pub struct ConstructQuery {

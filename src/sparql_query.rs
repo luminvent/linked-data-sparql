@@ -2,8 +2,8 @@ use spargebra::Query;
 
 pub trait SparqlQuery {
   fn sparql_query() -> String {
-    Self::sparql_algebra().to_string()
+    Self::sparql_query_algebra().to_string()
   }
 
-  fn sparql_algebra() -> Query;
+  fn sparql_query_algebra() -> Query;
 }

@@ -17,7 +17,7 @@ struct Struct {
 
 #[test]
 fn query_struct() {
-  let query = Struct::sparql_algebra();
+  let query = Struct::sparql_query_algebra();
 
   println!("{:?}", query.to_string());
 }
@@ -32,7 +32,7 @@ fn test_struct() {
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
 
-  let dataset = store.query(Struct::sparql_algebra()).unwrap();
+  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
 
   let resource = Blank::new().next(&mut ()).into_term();
 

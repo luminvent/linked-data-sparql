@@ -35,7 +35,7 @@ fn test_enum() {
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
 
-  let dataset = store.query(Enum::sparql_algebra()).unwrap();
+  let dataset = store.query(Enum::sparql_query_algebra()).unwrap();
 
   let resource = Blank::new().next(&mut ()).into_term();
 
