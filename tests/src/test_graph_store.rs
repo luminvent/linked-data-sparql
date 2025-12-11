@@ -1,6 +1,6 @@
 use crate::rdf_type_conversions::IntoRdfTypes;
 use linked_data_next::{LinkedData, to_quads_with};
-use oxigraph::sparql::QueryResults;
+use oxigraph::sparql::{QueryResults, SparqlEvaluator};
 use oxigraph::store::Store;
 use oxttl::NQuadsParser;
 use rdf_types::RdfDisplay;
@@ -42,7 +42,12 @@ impl TestGraphStore {
   pub fn query(&self, query: spargebra::Query) -> IndexedBTreeDataset {
     let mut expected_dataset = IndexedBTreeDataset::new();
 
-    if let QueryResults::Graph(triples) = self.store.query(query).unwrap() {
+    if let QueryResults::Graph(triples) = SparqlEvaluator::new()
+      .for_query(query)
+      .on_store(&self.store)
+      .execute()
+      .unwrap()
+    {
       triples.filter_map(Result::ok).for_each(|triple| {
         let quad = triple.into_rdf_types();
         println!("{:?}", quad);

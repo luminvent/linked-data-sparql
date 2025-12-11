@@ -5,7 +5,6 @@ use crate::union::Union;
 use spargebra::Query;
 use spargebra::algebra::{Expression, GraphPattern};
 use spargebra::term::{NamedNode, NamedNodePattern, TermPattern, TriplePattern, Variable};
-use sparopt::Optimizer;
 
 #[derive(Default)]
 pub struct ConstructQuery {
@@ -97,12 +96,10 @@ impl ConstructQuery {
 
 impl From<ConstructQuery> for Query {
   fn from(value: ConstructQuery) -> Self {
-    let pattern = (&Optimizer::optimize_graph_pattern((&value.where_pattern).into())).into();
-
     Query::Construct {
       template: value.construct_template,
       dataset: None,
-      pattern,
+      pattern: value.where_pattern,
       base_iri: None,
     }
   }

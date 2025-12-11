@@ -16,7 +16,7 @@ readme = "README.md"
 
 [workspace.dependencies]
 iref = "3"
-spargebra = "0.3"
+spargebra = "0.4"
 xsd-types = "0.9"
 
 [dependencies]

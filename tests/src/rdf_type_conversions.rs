@@ -17,7 +17,7 @@ impl IntoRdfTypes for spargebra::term::Term {
         rdf_types::Term::Id(rdf_types::Id::Blank(blank_node.into_rdf_types()))
       }
       spargebra::term::Term::Literal(literal) => rdf_types::Term::Literal(literal.into_rdf_types()),
-      spargebra::term::Term::Triple(_) => panic!(),
+      // spargebra::term::Term::Triple(_) => panic!(),
     }
   }
 }
@@ -60,16 +60,15 @@ impl IntoRdfTypes for spargebra::term::BlankNode {
   }
 }
 
-impl IntoRdfTypes for spargebra::term::Subject {
+impl IntoRdfTypes for spargebra::term::NamedOrBlankNode {
   type T = rdf_types::Id;
 
   fn into_rdf_types(self) -> Self::T {
     match self {
-      spargebra::term::Subject::NamedNode(id) => rdf_types::Id::Iri(id.into_rdf_types()),
-      spargebra::term::Subject::BlankNode(blank_node) => {
+      spargebra::term::NamedOrBlankNode::NamedNode(id) => rdf_types::Id::Iri(id.into_rdf_types()),
+      spargebra::term::NamedOrBlankNode::BlankNode(blank_node) => {
         rdf_types::Id::Blank(blank_node.into_rdf_types())
       }
-      spargebra::term::Subject::Triple(_) => panic!(),
     }
   }
 }
