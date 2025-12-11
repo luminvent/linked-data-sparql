@@ -127,7 +127,7 @@ impl TokenGenerator for Sparql {
         .join_with_binding(
           binding_variable.clone(),
           ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#predicate_iri),
-          #ty::to_query_with_binding,
+          <#ty>::to_query_with_binding,
         )
       });
     }

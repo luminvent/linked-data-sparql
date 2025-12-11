@@ -7,7 +7,7 @@ struct Person {
   name: String,
 
   #[ld("ex:age")]
-  age: u32,
+  age: Option<u32>,
 }
 
 fn main() {

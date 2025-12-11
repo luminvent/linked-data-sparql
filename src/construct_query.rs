@@ -140,6 +140,12 @@ to_construct_query_datatypes!(
   xsd_types::DateTime
 );
 
+impl<T> ToConstructQuery for Option<T> {
+  fn to_query_with_binding(_: Variable) -> ConstructQuery {
+    ConstructQuery::default()
+  }
+}
+
 impl Join for ConstructQuery {
   fn join(mut self, other: Self) -> Self {
     self.construct_template.extend(other.construct_template);
