@@ -1,5 +1,6 @@
-use crate::rdf_type_conversions::IntoRdfTypes;
 use linked_data_next::{LinkedData, to_quads_with};
+use linked_data_sparql::rdf_type_conversions::IntoRdfTypes;
+use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
 use oxigraph::sparql::{QueryResults, SparqlEvaluator};
 use oxigraph::store::Store;
 use oxttl::NQuadsParser;
@@ -18,8 +19,10 @@ impl TestGraphStore {
 
     Self { store }
   }
+}
 
-  pub fn insert(&mut self, data: &impl LinkedData<WithGenerator<Blank>>) {
+impl SparqlGraphStore for TestGraphStore {
+  fn insert(&mut self, data: &impl LinkedData<WithGenerator<Blank>>) -> Result<(), String> {
     let mut interpretation = WithGenerator::new((), Blank::new());
 
     let triples = to_quads_with(&mut (), &mut interpretation, data)
@@ -37,16 +40,18 @@ impl TestGraphStore {
     quads.filter_map(Result::ok).for_each(|quad| {
       self.store.insert(&quad).unwrap();
     });
+
+    Ok(())
   }
 
-  pub fn query(&self, query: spargebra::Query) -> IndexedBTreeDataset {
+  fn query(&self, query: spargebra::Query) -> Result<IndexedBTreeDataset, String> {
     let mut expected_dataset = IndexedBTreeDataset::new();
 
     if let QueryResults::Graph(triples) = SparqlEvaluator::new()
       .for_query(query)
       .on_store(&self.store)
       .execute()
-      .unwrap()
+      .map_err(|e| e.to_string())?
     {
       triples.filter_map(Result::ok).for_each(|triple| {
         let quad = triple.into_rdf_types();
@@ -54,9 +59,9 @@ impl TestGraphStore {
         expected_dataset.insert(quad);
       });
     } else {
-      panic!();
+      return Err("No graph".to_string());
     }
 
-    expected_dataset
+    Ok(expected_dataset)
   }
 }

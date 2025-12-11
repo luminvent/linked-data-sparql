@@ -16,11 +16,32 @@ readme = "README.md"
 
 [workspace.dependencies]
 iref = "3"
+linked-data-next = "0.1"
+rdf-types = "0.22"
 spargebra = "0.4"
 xsd-types = "0.9"
 
+[features]
+rdf12 = [
+    "oxrdf/rdf-12",
+    "oxrdfio/rdf-12",
+    "oxttl/rdf-12",
+    "spareval/sparql-12",
+    "sparopt/sparql-12",
+    "sparesults/sparql-12",
+    "spargebra/sparql-12",
+]
+
 [dependencies]
-spargebra.workspace = true
+langtag = "0.4.0"
+linked-data-next.workspace = true
 linked-data-sparql-derive = { path = "derive" }
-sparopt = "0.2"
+oxrdf = "0.3"
+oxrdfio = "0.2"
+oxttl = "0.2"
+rdf-types.workspace = true
+spareval = "0.2"
+sparopt = "0.3"
+sparesults = "0.3"
+spargebra.workspace = true
 xsd-types.workspace = true

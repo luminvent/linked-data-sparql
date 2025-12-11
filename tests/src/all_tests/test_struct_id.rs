@@ -3,6 +3,7 @@ use iref::IriBuf;
 use linked_data_next::{
   Deserialize, LinkedDataDeserializePredicateObjects, LinkedDataDeserializeSubject, Serialize,
 };
+use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
 use linked_data_sparql::{Sparql, SparqlQuery};
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
@@ -24,9 +25,9 @@ fn test_struct_id() {
   };
 
   let mut store = TestGraphStore::new();
-  store.insert(&expected);
+  store.insert(&expected).unwrap();
 
-  let dataset = store.query(StructId::sparql_algebra());
+  let dataset = store.query(StructId::sparql_algebra()).unwrap();
 
   let resource = <rdf_types::Term as rdf_types::FromIri>::from_iri(id);
 
@@ -50,10 +51,10 @@ fn test_struct_id_multiple() {
   };
 
   let mut store = TestGraphStore::new();
-  store.insert(&expected_1);
-  store.insert(&expected_2);
+  store.insert(&expected_1).unwrap();
+  store.insert(&expected_2).unwrap();
 
-  let dataset = store.query(StructId::sparql_algebra());
+  let dataset = store.query(StructId::sparql_algebra()).unwrap();
 
   let resource_1 = <rdf_types::Term as rdf_types::FromIri>::from_iri(id_1);
 

@@ -5,12 +5,11 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-linked-data-sparql = { path = ".." }
+linked-data-sparql = { path = "..", features = ["rdf12"] }
 iref.workspace = true
 spargebra.workspace = true
 xsd-types.workspace = true
-linked-data-next = "0.1.5"
+linked-data-next.workspace = true
 oxttl = "0.2"
-oxigraph = "0.5"
-langtag = "0.4.0"
-rdf-types = "0.22.5"
+oxigraph = { version = "0.5", features = ["rdf-12"] }
+rdf-types.workspace = true

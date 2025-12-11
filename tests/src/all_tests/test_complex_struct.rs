@@ -1,6 +1,7 @@
 use crate::test_graph_store::TestGraphStore;
 use iref::IriBuf;
 use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
+use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
 use linked_data_sparql::{Sparql, SparqlQuery};
 
 #[test]
@@ -80,9 +81,9 @@ fn test_complex_struct() {
   };
 
   let mut store = TestGraphStore::new();
-  store.insert(&expected);
+  store.insert(&expected).unwrap();
 
-  let dataset = store.query(ComplexStruct::sparql_algebra());
+  let dataset = store.query(ComplexStruct::sparql_algebra()).unwrap();
 
   let resource = <rdf_types::Term as rdf_types::FromIri>::from_iri(id);
 

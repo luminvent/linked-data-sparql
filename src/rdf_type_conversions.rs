@@ -17,7 +17,8 @@ impl IntoRdfTypes for spargebra::term::Term {
         rdf_types::Term::Id(rdf_types::Id::Blank(blank_node.into_rdf_types()))
       }
       spargebra::term::Term::Literal(literal) => rdf_types::Term::Literal(literal.into_rdf_types()),
-      // spargebra::term::Term::Triple(_) => panic!(),
+      #[cfg(feature = "rdf12")]
+      spargebra::term::Term::Triple(_) => panic!(),
     }
   }
 }
@@ -26,6 +27,7 @@ impl IntoRdfTypes for spargebra::term::Literal {
   type T = rdf_types::Literal;
 
   fn into_rdf_types(self) -> Self::T {
+    #[cfg(not(feature = "rdf12"))]
     match self.destruct() {
       (value, Some(datatype_iri), None) => rdf_types::Literal::new(
         value,
@@ -36,6 +38,23 @@ impl IntoRdfTypes for spargebra::term::Literal {
         rdf_types::LiteralType::LangString(langtag::LangTagBuf::from_str(&language_tag).unwrap()),
       ),
       (value, None, None) => rdf_types::Literal::new(
+        value,
+        rdf_types::LiteralType::Any(rdf_types::XSD_STRING.to_owned()),
+      ),
+      _ => panic!(),
+    }
+
+    #[cfg(feature = "rdf12")]
+    match self.destruct() {
+      (value, Some(datatype_iri), None, _) => rdf_types::Literal::new(
+        value,
+        rdf_types::LiteralType::Any(datatype_iri.into_rdf_types()),
+      ),
+      (value, None, Some(language_tag), _) => rdf_types::Literal::new(
+        value,
+        rdf_types::LiteralType::LangString(langtag::LangTagBuf::from_str(&language_tag).unwrap()),
+      ),
+      (value, None, None, _) => rdf_types::Literal::new(
         value,
         rdf_types::LiteralType::Any(rdf_types::XSD_STRING.to_owned()),
       ),

@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use crate::test_graph_store::TestGraphStore;
 use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
+use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
 use linked_data_sparql::{Sparql, SparqlQuery};
 use rdf_types::Generator;
 use rdf_types::generator::Blank;
@@ -49,9 +50,9 @@ fn test_datatypes() {
   };
 
   let mut store = TestGraphStore::new();
-  store.insert(&expected);
+  store.insert(&expected).unwrap();
 
-  let dataset = store.query(Datatypes::sparql_algebra());
+  let dataset = store.query(Datatypes::sparql_algebra()).unwrap();
 
   let resource = Blank::new().next(&mut ()).into_term();
 

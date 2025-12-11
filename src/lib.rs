@@ -19,9 +19,12 @@
 mod and;
 mod construct_query;
 mod join;
+pub mod sparql_graph_store;
 mod sparql_query;
 mod to_construct_query;
 mod union;
+
+pub mod rdf_type_conversions;
 
 pub use crate::and::And;
 pub use crate::construct_query::ConstructQuery;
