@@ -37,9 +37,10 @@ impl SparqlGraphStore for TestGraphStore {
 
     let quads = NQuadsParser::new().for_slice(&data);
 
-    quads.filter_map(Result::ok).for_each(|quad| {
-      self.store.insert(&quad).unwrap();
-    });
+    self
+      .store
+      .extend(quads.filter_map(Result::ok))
+      .map_err(|e| e.to_string())?;
 
     Ok(())
   }
