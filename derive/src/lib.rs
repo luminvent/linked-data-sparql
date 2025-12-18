@@ -123,13 +123,35 @@ impl TokenGenerator for Sparql {
     if let Some(predicate) = field.predicate() {
       let ty = &field.ty;
       let predicate_iri = predicate.as_str();
-      tokens.extend(quote::quote! {
-        .join_with_binding(
-          binding_variable.clone(),
-          ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#predicate_iri),
-          <#ty>::to_query_with_binding,
-        )
-      });
+
+      if is_option_rdf_field(field) {
+        tokens.extend(quote::quote! {
+          .left_join_with_binding(
+            binding_variable.clone(),
+            ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#predicate_iri),
+            <#ty>::to_query_with_binding,
+          )
+        });
+      } else {
+        tokens.extend(quote::quote! {
+          .join_with_binding(
+            binding_variable.clone(),
+            ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#predicate_iri),
+            <#ty>::to_query_with_binding,
+          )
+        });
+      }
     }
   }
+}
+
+fn is_option_rdf_field(field: &RdfField<Sparql>) -> bool {
+  if let syn::Type::Path(type_path) = &field.ty
+    && let Some(path_segment) = type_path.path.segments.first()
+    && path_segment.ident == "Option"
+  {
+    return true;
+  }
+
+  false
 }

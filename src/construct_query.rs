@@ -1,3 +1,4 @@
+use crate::construct_query::left_join::LeftJoin;
 use crate::to_construct_query::ToConstructQuery;
 use and::And;
 use join::Join;
@@ -8,6 +9,7 @@ use union::Union;
 
 pub mod and;
 pub mod join;
+pub mod left_join;
 pub mod union;
 
 #[derive(Default)]
@@ -79,6 +81,22 @@ impl ConstructQuery {
       .join(to_query_with_binding(object))
   }
 
+  pub fn left_join_with_binding<F>(
+    self,
+    subject: Variable,
+    predicate: NamedNode,
+    to_query_with_binding: F,
+  ) -> Self
+  where
+    F: FnOnce(Variable) -> Self,
+  {
+    let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
+
+    self
+      .left_join(Self::new(subject, predicate, object.clone()))
+      .join(to_query_with_binding(object))
+  }
+
   pub fn join_with(self, subject: Variable, predicate: NamedNode, object: NamedNode) -> Self {
     self.join(Self::new(subject, predicate, object))
   }
@@ -116,15 +134,15 @@ impl ToConstructQuery for Variable {
 }
 
 macro_rules! to_construct_query_datatypes {
-    ($($t:ty),*) => {
-        $(
-            impl ToConstructQuery for $t {
-                fn to_query_with_binding(_: Variable) -> ConstructQuery {
-                    ConstructQuery::default()
-                }
-            }
-        )*
-    };
+  ($($t:ty),*) => {
+    $(
+      impl ToConstructQuery for $t {
+        fn to_query_with_binding(_: Variable) -> ConstructQuery {
+          ConstructQuery::default()
+        }
+      }
+    )*
+  };
 }
 
 to_construct_query_datatypes!(
@@ -142,7 +160,10 @@ to_construct_query_datatypes!(
 
 impl<T> ToConstructQuery for Option<T> {
   fn to_query_with_binding(_: Variable) -> ConstructQuery {
-    ConstructQuery::default()
+    ConstructQuery {
+      construct_template: vec![],
+      where_pattern: Default::default(),
+    }
   }
 }
 
@@ -150,6 +171,14 @@ impl Join for ConstructQuery {
   fn join(mut self, other: Self) -> Self {
     self.construct_template.extend(other.construct_template);
     self.where_pattern = self.where_pattern.join(other.where_pattern);
+    self
+  }
+}
+
+impl LeftJoin for ConstructQuery {
+  fn left_join(mut self, other: Self) -> Self {
+    self.construct_template.extend(other.construct_template);
+    self.where_pattern = self.where_pattern.left_join(other.where_pattern);
     self
   }
 }
@@ -174,6 +203,16 @@ impl Join for GraphPattern {
     GraphPattern::Join {
       left: Box::new(self),
       right: Box::new(other),
+    }
+  }
+}
+
+impl LeftJoin for GraphPattern {
+  fn left_join(self, other: Self) -> Self {
+    GraphPattern::LeftJoin {
+      left: Box::new(self),
+      right: Box::new(other),
+      expression: None,
     }
   }
 }

@@ -23,7 +23,7 @@ fn query_struct() {
 }
 
 #[test]
-fn test_struct() {
+fn test_struct_with_option_to_some() {
   let expected = Struct {
     field_0: "zero".to_owned(),
     field_1: Some("one".to_owned()),
@@ -31,6 +31,31 @@ fn test_struct() {
 
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
+
+  let query = Struct::sparql_query();
+  println!("{}", query);
+
+  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
+
+  let resource = Blank::new().next(&mut ()).into_term();
+
+  let actual = Struct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+
+  assert_eq!(expected, actual);
+}
+
+#[test]
+fn test_struct_with_option_to_none() {
+  let expected = Struct {
+    field_0: "zero".to_owned(),
+    field_1: None,
+  };
+
+  let mut store = TestGraphStore::new();
+  store.insert(&expected).unwrap();
+
+  let query = Struct::sparql_query();
+  println!("{}", query);
 
   let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
 
