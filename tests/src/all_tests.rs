@@ -10,3 +10,4 @@ mod test_struct_id;
 mod test_struct_type;
 mod test_struct_vec;
 mod test_struct_with_option;
+mod test_hashset;
