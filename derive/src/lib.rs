@@ -148,7 +148,9 @@ impl TokenGenerator for Sparql {
 fn is_option_rdf_field(field: &RdfField<Sparql>) -> bool {
   if let syn::Type::Path(type_path) = &field.ty
     && let Some(path_segment) = type_path.path.segments.first()
-    && (path_segment.ident == "Option" || path_segment.ident == "Vec" || path_segment.ident == "HashSet" )
+    && (path_segment.ident == "Option"
+      || path_segment.ident == "Vec"
+      || path_segment.ident == "HashSet")
   {
     return true;
   }

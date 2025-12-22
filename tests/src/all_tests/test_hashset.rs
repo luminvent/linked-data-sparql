@@ -1,10 +1,10 @@
-use std::collections::HashSet;
 use crate::test_graph_store::TestGraphStore;
 use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
 use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
 use linked_data_sparql::{Sparql, SparqlQuery};
 use rdf_types::Generator;
 use rdf_types::generator::Blank;
+use std::collections::HashSet;
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
 #[ld(prefix("ex" = "http://ex/"))]
@@ -44,8 +44,8 @@ fn test_struct_with_vec_2_values() {
 
   println!("{:?}", actual);
   assert_eq!(expected.field_0, actual.field_0);
-  assert!(actual.field_1.contains(&"one".to_string()));
-  assert!(actual.field_1.contains(&"two".to_string()));
+  assert!(actual.field_1.contains("one"));
+  assert!(actual.field_1.contains("two"));
 }
 
 #[test]

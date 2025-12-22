@@ -71,7 +71,6 @@ fn test_struct_with_vec_empty() {
 
 #[test]
 fn test_struct_with_vec_1_value() {
-
   #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
   #[ld(prefix("ex" = "http://ex/"))]
   struct MainStruct {
@@ -102,10 +101,9 @@ fn test_struct_with_vec_1_value() {
       SubStruct {
         sub_field_0: "tree".to_owned(),
         sub_field_1: vec!["four".to_owned(), "five".to_owned()],
-      }
+      },
     ],
   };
-
 
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
