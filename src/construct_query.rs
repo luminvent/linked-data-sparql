@@ -167,6 +167,15 @@ impl<T> ToConstructQuery for Option<T> {
   }
 }
 
+impl<T> ToConstructQuery for Vec<T> {
+  fn to_query_with_binding(_: Variable) -> ConstructQuery {
+    ConstructQuery {
+      construct_template: vec![],
+      where_pattern: Default::default(),
+    }
+  }
+}
+
 impl Join for ConstructQuery {
   fn join(mut self, other: Self) -> Self {
     self.construct_template.extend(other.construct_template);
