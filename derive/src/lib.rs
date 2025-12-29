@@ -4,7 +4,7 @@ use linked_data_core::{
 use proc_macro_error::proc_macro_error;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::DeriveInput;
+use syn::{DeriveInput, GenericArgument, PathArguments, Type};
 
 #[proc_macro_error]
 #[proc_macro_derive(Sparql, attributes(ld))]
@@ -41,11 +41,11 @@ impl TokenGenerator for Sparql {
       rdf_struct.type_iri().map(|iri| iri.clone().into_string())
         .map(|type_iri| {
           quote::quote! {
-            .join_with(
+            let construct_query = construct_query.join_with(
               binding_variable.clone(),
               ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
               ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#type_iri),
-            )
+            );
           }
         })
         .unwrap_or_default();
@@ -53,9 +53,10 @@ impl TokenGenerator for Sparql {
     tokens.extend(quote::quote! {
       impl ::linked_data_sparql::ToConstructQuery for #ident {
         fn to_query_with_binding(binding_variable: ::linked_data_sparql::reexport::spargebra::term::Variable) -> ::linked_data_sparql::ConstructQuery {
-          ::linked_data_sparql::ConstructQuery::default()
-          #(#fields)*
+          let construct_query = ::linked_data_sparql::ConstructQuery::default();
           #type_tokens
+          #(#fields)*
+          construct_query
         }
       }
     });
@@ -68,8 +69,9 @@ impl TokenGenerator for Sparql {
     tokens.extend(quote::quote! {
       impl ::linked_data_sparql::ToConstructQuery for #ident {
         fn to_query_with_binding(binding_variable: ::linked_data_sparql::reexport::spargebra::term::Variable) -> ::linked_data_sparql::ConstructQuery {
-          ::linked_data_sparql::ConstructQuery::default()
+          let construct_query = ::linked_data_sparql::ConstructQuery::default();
           #(#variants)*
+          construct_query
         }
       }
     });
@@ -77,10 +79,9 @@ impl TokenGenerator for Sparql {
 
   fn generate_variant_tokens(variant: &RdfVariant<Self>, tokens: &mut TokenStream) {
     let ty = &variant.ty;
-    let inner_generator = quote::quote! { #ty::to_query_with_binding };
 
-    let (iri_str, predicate_generator) = match &variant.predicate_path() {
-      PredicatePath::Predicate(iri) => (iri.as_str(), inner_generator),
+    let (iri_str, chained_object_with_predicate) = match &variant.predicate_path() {
+      PredicatePath::Predicate(iri) => (iri.as_str(), quote::quote! {}),
       PredicatePath::ChainedPath {
         to_blank,
         from_blank,
@@ -90,21 +91,21 @@ impl TokenGenerator for Sparql {
         (
           from_blank.as_str(),
           quote::quote! {
-            ::linked_data_sparql::with_predicate(
+            let (construct_query, _) = construct_query.union_with_binding::<#ty>(
+              object,
               ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#to_blank_str),
-              #inner_generator
-            )
+            );
           },
         )
       }
     };
 
     tokens.extend(quote::quote! {
-      .union_with_binding(
+      let (construct_query, object) = construct_query.union_with_binding::<#ty>(
         binding_variable.clone(),
         ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#iri_str),
-        #predicate_generator
-      )
+      );
+      #chained_object_with_predicate
     });
   }
 
@@ -116,44 +117,58 @@ impl TokenGenerator for Sparql {
     if field.is_flattened() {
       let ty = &field.ty;
       tokens.extend(quote::quote! {
-        .join(#ty::to_query_with_binding(binding_variable.clone()))
+        let construct_query = construct_query.join(#ty::to_query_with_binding(binding_variable.clone()));
       });
     }
 
     if let Some(predicate) = field.predicate() {
-      let ty = &field.ty;
+      let ty = type_for_to_query_with_binding(field);
       let predicate_iri = predicate.as_str();
 
-      if is_option_rdf_field(field) {
+      if left_join_required(field) {
         tokens.extend(quote::quote! {
-          .left_join_with_binding(
+          let (construct_query, object) = construct_query.left_join_with_binding::<#ty>(
             binding_variable.clone(),
             ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#predicate_iri),
-            <#ty>::to_query_with_binding,
-          )
+          );
         });
       } else {
         tokens.extend(quote::quote! {
-          .join_with_binding(
+          let (construct_query, object) = construct_query.join_with_binding::<#ty>(
             binding_variable.clone(),
             ::linked_data_sparql::reexport::spargebra::term::NamedNode::new_unchecked(#predicate_iri),
-            <#ty>::to_query_with_binding,
-          )
+          );
         });
       }
     }
   }
 }
 
-fn is_option_rdf_field(field: &RdfField<Sparql>) -> bool {
-  if let syn::Type::Path(type_path) = &field.ty
+fn type_for_to_query_with_binding(field: &RdfField<Sparql>) -> Type {
+  composed_inner_type(field).unwrap_or(field.ty.clone())
+}
+
+fn left_join_required(field: &RdfField<Sparql>) -> bool {
+  composed_inner_type(field).is_some()
+}
+
+fn composed_inner_type(field: &RdfField<Sparql>) -> Option<Type> {
+  if let Type::Path(type_path) = &field.ty
     && let Some(path_segment) = type_path.path.segments.first()
     && (path_segment.ident == "Option"
       || path_segment.ident == "Vec"
       || path_segment.ident == "HashSet")
   {
-    return true;
+    if let PathArguments::AngleBracketed(arguments) = &path_segment.arguments {
+      if let Some(GenericArgument::Type(argument_type)) = arguments.args.first() {
+        Some(argument_type.clone())
+      } else {
+        None
+      }
+    } else {
+      None
+    }
+  } else {
+    None
   }
-
-  false
 }

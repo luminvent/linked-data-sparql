@@ -33,6 +33,8 @@ impl SparqlGraphStore for TestGraphStore {
       .join("\n")
       + "\n";
 
+    println!("{}", triples);
+
     let data = triples.into_bytes();
 
     let quads = NQuadsParser::new().for_slice(&data);

@@ -21,10 +21,9 @@ fn test_enum_type() {
 
   impl ToConstructQuery for EnumType {
     fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-      ConstructQuery::new_with_binding(
+      ConstructQuery::new_with_binding::<String>(
         binding_variable.clone(),
         NamedNode::new_unchecked("http://ex/left"),
-        String::to_query_with_binding,
       )
       .join_with(
         binding_variable.clone(),

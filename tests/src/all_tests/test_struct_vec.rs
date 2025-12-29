@@ -84,10 +84,10 @@ fn test_struct_with_vec_1_value() {
   #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
   #[ld(prefix("ex" = "http://ex/"))]
   struct SubStruct {
-    #[ld("ex:field_0")]
+    #[ld("ex:sub_field_0")]
     sub_field_0: String,
 
-    #[ld("ex:field_1")]
+    #[ld("ex:sub_field_1")]
     sub_field_1: Vec<String>,
   }
 
@@ -108,10 +108,10 @@ fn test_struct_with_vec_1_value() {
   let mut store = TestGraphStore::new();
   store.insert(&expected).unwrap();
 
-  let query = Struct::sparql_query();
+  let query = MainStruct::sparql_query();
   println!("{}", query);
 
-  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
+  let dataset = store.query(MainStruct::sparql_query_algebra()).unwrap();
 
   let resource = Blank::new().next(&mut ()).into_term();
 

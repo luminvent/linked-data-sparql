@@ -12,7 +12,7 @@ pub mod join;
 pub mod left_join;
 pub mod union;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ConstructQuery {
   construct_template: Vec<TriplePattern>,
   where_pattern: GraphPattern,
@@ -36,65 +36,52 @@ impl ConstructQuery {
     }
   }
 
-  pub fn new_with_binding<F>(
-    subject: Variable,
-    predicate: NamedNode,
-    to_query_with_binding: F,
-  ) -> Self
-  where
-    F: FnOnce(Variable) -> Self,
-  {
+  pub fn new_with_binding<T: ToConstructQuery>(subject: Variable, predicate: NamedNode) -> Self {
     let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
 
-    Self::new(subject, predicate, object.clone()).join(to_query_with_binding(object))
+    Self::new(subject, predicate, object.clone()).join(T::to_query_with_binding(object))
   }
 
-  pub fn union_with_binding<F>(
+  pub fn union_with_binding<T: ToConstructQuery>(
     self,
     subject: Variable,
     predicate: NamedNode,
-    to_query_with_binding: F,
-  ) -> Self
-  where
-    F: FnOnce(Variable) -> Self,
-  {
+  ) -> (Self, Variable) {
     let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
 
-    self
+    let construct_query = self
       .union(Self::new(subject, predicate, object.clone()))
-      .join(to_query_with_binding(object))
+      .join(T::to_query_with_binding(object.clone()));
+
+    (construct_query, object)
   }
 
-  pub fn join_with_binding<F>(
+  pub fn join_with_binding<T: ToConstructQuery>(
     self,
     subject: Variable,
     predicate: NamedNode,
-    to_query_with_binding: F,
-  ) -> Self
-  where
-    F: FnOnce(Variable) -> Self,
-  {
+  ) -> (Self, Variable) {
     let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
 
-    self
+    let construct_query = self
       .join(Self::new(subject, predicate, object.clone()))
-      .join(to_query_with_binding(object))
+      .join(T::to_query_with_binding(object.clone()));
+
+    (construct_query, object)
   }
 
-  pub fn left_join_with_binding<F>(
+  pub fn left_join_with_binding<T: ToConstructQuery>(
     self,
     subject: Variable,
     predicate: NamedNode,
-    to_query_with_binding: F,
-  ) -> Self
-  where
-    F: FnOnce(Variable) -> Self,
-  {
+  ) -> (Self, Variable) {
     let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
 
-    self
+    let construct_query = self
       .left_join(Self::new(subject, predicate, object.clone()))
-      .join(to_query_with_binding(object))
+      .join(T::to_query_with_binding(object.clone()));
+
+    (construct_query, object)
   }
 
   pub fn join_with(self, subject: Variable, predicate: NamedNode, object: NamedNode) -> Self {
@@ -158,30 +145,21 @@ to_construct_query_datatypes!(
   xsd_types::DateTime
 );
 
-impl<T> ToConstructQuery for Option<T> {
-  fn to_query_with_binding(_: Variable) -> ConstructQuery {
-    ConstructQuery {
-      construct_template: vec![],
-      where_pattern: Default::default(),
-    }
+impl<T: ToConstructQuery> ToConstructQuery for Option<T> {
+  fn to_query_with_binding(variable: Variable) -> ConstructQuery {
+    T::to_query_with_binding(variable)
   }
 }
 
-impl<T> ToConstructQuery for Vec<T> {
-  fn to_query_with_binding(_: Variable) -> ConstructQuery {
-    ConstructQuery {
-      construct_template: vec![],
-      where_pattern: Default::default(),
-    }
+impl<T: ToConstructQuery> ToConstructQuery for Vec<T> {
+  fn to_query_with_binding(variable: Variable) -> ConstructQuery {
+    T::to_query_with_binding(variable)
   }
 }
 
-impl<T> ToConstructQuery for std::collections::HashSet<T> {
-  fn to_query_with_binding(_: Variable) -> ConstructQuery {
-    ConstructQuery {
-      construct_template: vec![],
-      where_pattern: Default::default(),
-    }
+impl<T: ToConstructQuery> ToConstructQuery for std::collections::HashSet<T> {
+  fn to_query_with_binding(variable: Variable) -> ConstructQuery {
+    T::to_query_with_binding(variable)
   }
 }
 
