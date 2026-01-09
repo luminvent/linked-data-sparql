@@ -1,7 +1,7 @@
 [workspace.package]
 license = "MIT"
 edition = "2024"
-version = "0.2.0"
+version = "0.2.1"
 repository = "https://github.com/luminvent/linked-data-sparql"
 
 [workspace]
