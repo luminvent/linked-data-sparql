@@ -50,8 +50,7 @@ impl ConstructQuery {
     let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
 
     let construct_query = self
-      .union(Self::new(subject, predicate, object.clone()))
-      .join(T::to_query_with_binding(object.clone()));
+      .union(Self::new(subject, predicate, object.clone()).join(T::to_query_with_binding(object.clone())));
 
     (construct_query, object)
   }
@@ -64,8 +63,7 @@ impl ConstructQuery {
     let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
 
     let construct_query = self
-      .join(Self::new(subject, predicate, object.clone()))
-      .join(T::to_query_with_binding(object.clone()));
+      .join(Self::new(subject, predicate, object.clone()).join(T::to_query_with_binding(object.clone())));
 
     (construct_query, object)
   }
@@ -77,9 +75,9 @@ impl ConstructQuery {
   ) -> (Self, Variable) {
     let object = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
 
-    let construct_query = self
-      .left_join(Self::new(subject, predicate, object.clone()))
-      .join(T::to_query_with_binding(object.clone()));
+    let construct_query = self.left_join(
+      Self::new(subject, predicate, object.clone()).join(T::to_query_with_binding(object.clone())),
+    );
 
     (construct_query, object)
   }
