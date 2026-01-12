@@ -38,10 +38,13 @@ rdf12 = [
 langtag = "0.4.0"
 linked-data-next.workspace = true
 linked-data-sparql-derive = { path = "derive", version = "0.2" }
+oxigraph = "0.5"
 oxrdf = "0.3"
 oxrdfio = "0.2"
 oxttl = "0.2"
+reqwest = "0.12"
 rdf-types.workspace = true
+serde = { version = "1", features = ["derive"] }
 spareval = "0.2"
 sparopt = "0.3"
 sparesults = "0.3"

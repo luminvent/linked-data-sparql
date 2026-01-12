@@ -1,11 +1,10 @@
-use crate::test_graph_store::TestGraphStore;
 use iref::IriBuf;
-use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
-use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
+use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
 use linked_data_sparql::{Sparql, SparqlQuery};
 
-#[test]
-fn test_complex_struct() {
+#[tokio::test]
+async fn test_complex_struct() {
   #[allow(dead_code)]
   #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
   #[ld(prefix("ex" = "http://ex/"))]
@@ -80,27 +79,24 @@ fn test_complex_struct() {
     // crazy_field: create_crazy_enum(),
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let dataset = store.query(ComplexStruct::sparql_query_algebra()).unwrap();
+  store.default_insert(&expected).await.unwrap();
 
-  let resources = dataset.resources().cloned().collect::<Vec<_>>();
+  let query_results = store
+    .query(ComplexStruct::sparql_query_algebra())
+    .await
+    .unwrap();
 
-  let resource = <rdf_types::Term as rdf_types::FromIri>::from_iri(id);
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  let actual = ComplexStruct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject::<ComplexStruct>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 
-  let objects = resources
-    .iter()
-    .filter_map(|resource| {
-      ComplexStruct::deserialize_subject(&(), &(), &dataset, None, resource).ok()
-    })
-    .collect::<Vec<_>>();
-
-  println!("{:?}", objects);
+  let objects = query_result_dataset.deserialize_subjects::<ComplexStruct>();
 
   assert_eq!(objects.len(), 1);
 }

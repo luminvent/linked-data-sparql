@@ -1,9 +1,6 @@
-use crate::test_graph_store::TestGraphStore;
-use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
-use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
+use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
 use linked_data_sparql::{Sparql, SparqlQuery};
-use rdf_types::Generator;
-use rdf_types::generator::Blank;
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
 #[ld(prefix("ex" = "http://ex/"))]
@@ -36,54 +33,54 @@ fn query_struct() {
   println!("{:?}", query.to_string());
 }
 
-#[test]
-fn test_struct_with_option_to_some() {
+#[tokio::test]
+async fn test_struct_with_option_to_some() {
   let expected = Struct {
     field_0: "zero".to_owned(),
     field_1: Some("one".to_owned()),
     field_2: None,
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let query = Struct::sparql_query();
-  println!("{}", query);
+  store.default_insert(&expected).await.unwrap();
 
-  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
+  let query_results = store.query(Struct::sparql_query_algebra()).await.unwrap();
 
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  let actual = Struct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject::<Struct>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }
 
-#[test]
-fn test_struct_with_option_to_none() {
+#[tokio::test]
+async fn test_struct_with_option_to_none() {
   let expected = Struct {
     field_0: "zero".to_owned(),
     field_1: None,
     field_2: None,
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let query = Struct::sparql_query();
-  println!("{}", query);
+  store.default_insert(&expected).await.unwrap();
 
-  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
+  let query_results = store.query(Struct::sparql_query_algebra()).await.unwrap();
 
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  let actual = Struct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject::<Struct>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }
 
-#[test]
-fn test_struct_with_option_of_struct() {
+#[tokio::test]
+async fn test_struct_with_option_of_struct() {
   let expected = Struct {
     field_0: "zero".to_owned(),
     field_1: None,
@@ -93,18 +90,17 @@ fn test_struct_with_option_of_struct() {
       sub_field_2: Some("sub_two".to_owned()),
     }),
   };
+  let store = OxigraphSparqlGraphStore::default();
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  store.default_insert(&expected).await.unwrap();
 
-  let query = Struct::sparql_query();
-  println!("{}", query);
+  let query_results = store.query(Struct::sparql_query_algebra()).await.unwrap();
 
-  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  let resource = Blank::new().next(&mut ()).into_term();
-
-  let actual = Struct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject::<Struct>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }

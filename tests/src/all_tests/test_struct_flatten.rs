@@ -1,12 +1,9 @@
-use crate::test_graph_store::TestGraphStore;
-use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
-use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
+use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
 use linked_data_sparql::{Sparql, SparqlQuery};
-use rdf_types::Generator;
-use rdf_types::generator::Blank;
 
-#[test]
-fn test_struct_flatten() {
+#[tokio::test]
+async fn test_struct_flatten() {
   #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
   #[ld(prefix("ex" = "http://ex/"))]
   struct Struct {
@@ -31,14 +28,20 @@ fn test_struct_flatten() {
     },
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let dataset = store.query(StructFlatten::sparql_query_algebra()).unwrap();
+  store.default_insert(&expected).await.unwrap();
 
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_results = store
+    .query(StructFlatten::sparql_query_algebra())
+    .await
+    .unwrap();
 
-  let actual = StructFlatten::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
+
+  let actual = query_result_dataset
+    .deserialize_subject::<StructFlatten>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }

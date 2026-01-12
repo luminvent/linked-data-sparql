@@ -1,15 +1,12 @@
-use crate::test_graph_store::TestGraphStore;
-use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
-use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
+use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
 use linked_data_sparql::{ConstructQuery, SparqlQuery, ToConstructQuery};
-use rdf_types::Generator;
-use rdf_types::generator::Blank;
 use spargebra::term::{NamedNode, Variable};
 
 // NOTE Type attribute for enum missing
-#[test]
+#[tokio::test]
 #[ignore]
-fn test_enum_type() {
+async fn test_enum_type() {
   #[derive(Serialize, Deserialize, Debug, PartialEq)]
   #[ld(type = "http://ex/Type")]
   #[ld(prefix("ex" = "http://ex/"))]
@@ -35,14 +32,17 @@ fn test_enum_type() {
 
   let expected = EnumType::Left("left".to_owned());
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let dataset = store.query(EnumType::sparql_query_algebra()).unwrap();
+  store.default_insert(&expected).await.unwrap();
 
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_results = store.query(EnumType::sparql_query_algebra()).await.unwrap();
 
-  let actual = EnumType::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
+
+  let actual = query_result_dataset
+    .deserialize_subject::<EnumType>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }

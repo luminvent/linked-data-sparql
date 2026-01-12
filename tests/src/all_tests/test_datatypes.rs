@@ -1,14 +1,11 @@
 use std::str::FromStr;
 
-use crate::test_graph_store::TestGraphStore;
-use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
-use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
+use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
 use linked_data_sparql::{Sparql, SparqlQuery};
-use rdf_types::Generator;
-use rdf_types::generator::Blank;
 
-#[test]
-fn test_datatypes() {
+#[tokio::test]
+async fn test_datatypes() {
   /// NOTE Commented out datatypes are not preserved by oxigraph
   /// https://github.com/oxigraph/oxigraph/issues/526
   #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
@@ -49,14 +46,20 @@ fn test_datatypes() {
     date_time: xsd_types::DateTime::from_str("2024-01-15T12:30:45Z").unwrap(),
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let dataset = store.query(Datatypes::sparql_query_algebra()).unwrap();
+  store.default_insert(&expected).await.unwrap();
 
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_results = store
+    .query(Datatypes::sparql_query_algebra())
+    .await
+    .unwrap();
 
-  let actual = Datatypes::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
+
+  let actual = query_result_dataset
+    .deserialize_subject::<Datatypes>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }

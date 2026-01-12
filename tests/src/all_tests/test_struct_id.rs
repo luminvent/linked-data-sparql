@@ -1,9 +1,6 @@
-use crate::test_graph_store::TestGraphStore;
 use iref::IriBuf;
-use linked_data_next::{
-  Deserialize, LinkedDataDeserializePredicateObjects, LinkedDataDeserializeSubject, Serialize,
-};
-use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
+use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
 use linked_data_sparql::{Sparql, SparqlQuery};
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
@@ -16,28 +13,31 @@ struct StructId {
   value: String,
 }
 
-#[test]
-fn test_struct_id() {
+#[tokio::test]
+async fn test_struct_id() {
   let id = IriBuf::new("http://example.org/myBar".to_string()).unwrap();
   let expected = StructId {
     id: id.clone(),
     value: "value".to_owned(),
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let dataset = store.query(StructId::sparql_query_algebra()).unwrap();
+  store.default_insert(&expected).await.unwrap();
 
-  let resource = <rdf_types::Term as rdf_types::FromIri>::from_iri(id);
+  let query_results = store.query(StructId::sparql_query_algebra()).await.unwrap();
 
-  let actual = StructId::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
+
+  let actual = query_result_dataset
+    .deserialize_subject::<StructId>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }
 
-#[test]
-fn test_struct_id_multiple() {
+#[tokio::test]
+async fn test_struct_id_multiple() {
   let id_1 = IriBuf::new("http://example.org/myBar1".to_string()).unwrap();
   let expected_1 = StructId {
     id: id_1.clone(),
@@ -50,28 +50,31 @@ fn test_struct_id_multiple() {
     value: "value_2".to_owned(),
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected_1).unwrap();
-  store.insert(&expected_2).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let dataset = store.query(StructId::sparql_query_algebra()).unwrap();
+  store.default_insert(&expected_1).await.unwrap();
+  store.default_insert(&expected_2).await.unwrap();
+
+  let query_results = store.query(StructId::sparql_query_algebra()).await.unwrap();
+
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
   let resource_1 = <rdf_types::Term as rdf_types::FromIri>::from_iri(id_1);
-
-  let actual =
-    StructId::deserialize_objects(&(), &(), &dataset, None, &vec![resource_1.clone()]).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject_with_resource_id::<StructId>(&resource_1)
+    .unwrap();
 
   assert_eq!(expected_1, actual);
 
   let resource_2 = <rdf_types::Term as rdf_types::FromIri>::from_iri(id_2);
-
-  let actual =
-    StructId::deserialize_objects(&(), &(), &dataset, None, &vec![resource_2.clone()]).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject_with_resource_id::<StructId>(&resource_2)
+    .unwrap();
 
   assert_eq!(expected_2, actual);
 
-  let actual =
-    StructId::deserialize_subjects(&(), &(), &dataset, None, [resource_1, resource_2]).unwrap();
+  let actual = query_result_dataset.deserialize_subjects::<StructId>();
 
-  assert_eq!(vec![expected_1, expected_2], actual);
+  assert!(actual.contains(&expected_1));
+  assert!(actual.contains(&expected_2));
 }

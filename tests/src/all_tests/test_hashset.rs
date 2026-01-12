@@ -1,10 +1,6 @@
-use crate::test_graph_store::TestGraphStore;
-use linked_data_next::{Deserialize, LinkedDataDeserializeSubject, Serialize};
-use linked_data_sparql::sparql_graph_store::SparqlGraphStore;
-use linked_data_sparql::{Sparql, SparqlQuery, ToConstructQuery};
-use oxigraph::model::Variable;
-use rdf_types::Generator;
-use rdf_types::generator::Blank;
+use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
+use linked_data_sparql::{Sparql, SparqlQuery};
 use std::collections::HashSet;
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
@@ -24,24 +20,24 @@ fn query_struct() {
   println!("{:?}", query.to_string());
 }
 
-#[test]
-fn test_struct_with_vec_2_values() {
+#[tokio::test]
+async fn test_struct_with_vec_2_values() {
   let expected = Struct {
     field_0: "zero".to_owned(),
     field_1: HashSet::from(["one".to_owned(), "two".to_owned()]),
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let query = Struct::sparql_query();
-  println!("{}", query);
+  store.default_insert(&expected).await.unwrap();
 
-  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
+  let query_results = store.query(Struct::sparql_query_algebra()).await.unwrap();
 
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  let actual = Struct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject::<Struct>()
+    .unwrap();
 
   println!("{:?}", actual);
   assert_eq!(expected.field_0, actual.field_0);
@@ -49,31 +45,30 @@ fn test_struct_with_vec_2_values() {
   assert!(actual.field_1.contains("two"));
 }
 
-#[test]
-fn test_struct_with_empty_hashset() {
+#[tokio::test]
+async fn test_struct_with_empty_hashset() {
   let expected = Struct {
     field_0: "zero".to_owned(),
     field_1: HashSet::new(),
   };
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  let store = OxigraphSparqlGraphStore::default();
 
-  let query = Struct::sparql_query();
-  println!("{}", query);
+  store.default_insert(&expected).await.unwrap();
 
-  let dataset = store.query(Struct::sparql_query_algebra()).unwrap();
+  let query_results = store.query(Struct::sparql_query_algebra()).await.unwrap();
 
-  println!("{:?}", dataset);
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  let actual = Struct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let actual = query_result_dataset
+    .deserialize_subject::<Struct>()
+    .unwrap();
 
   assert_eq!(expected, actual);
 }
 
-#[test]
-fn test_struct_with_hashset_of_struct() {
+#[tokio::test]
+async fn test_struct_with_hashset_of_struct() {
   #[derive(Clone, Debug, Eq, Hash, Serialize, Deserialize, PartialEq, Sparql)]
   #[ld(prefix("ex" = "http://ex/"))]
   pub struct Title {
@@ -103,21 +98,17 @@ fn test_struct_with_hashset_of_struct() {
     ]),
   };
 
-  let variable = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
-  println!("$$$$ {:?}", Title::to_query_with_binding(variable));
+  let store = OxigraphSparqlGraphStore::default();
 
-  let mut store = TestGraphStore::new();
-  store.insert(&expected).unwrap();
+  store.default_insert(&expected).await.unwrap();
 
-  let query = Movie::sparql_query();
-  println!("{}", query);
+  let query_results = store.query(Movie::sparql_query_algebra()).await.unwrap();
 
-  let dataset = store.query(Movie::sparql_query_algebra()).unwrap();
+  println!("{:?}", query_results);
 
-  let resource = Blank::new().next(&mut ()).into_term();
+  let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  let actual = Movie::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
+  let actual = query_result_dataset.deserialize_subject::<Movie>().unwrap();
 
-  println!("{:?}", actual);
   assert_eq!(expected, actual);
 }
