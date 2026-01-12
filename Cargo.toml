@@ -1,7 +1,7 @@
 [workspace.package]
 license = "MIT"
 edition = "2024"
-version = "0.2.1"
+version = "0.3.0"
 repository = "https://github.com/luminvent/linked-data-sparql"
 
 [workspace]
@@ -37,7 +37,7 @@ rdf12 = [
 [dependencies]
 langtag = "0.4.0"
 linked-data-next.workspace = true
-linked-data-sparql-derive = { path = "derive", version = "0.2" }
+linked-data-sparql-derive = { path = "derive", version = "0.3" }
 oxigraph = "0.5"
 oxrdf = "0.3"
 oxrdfio = "0.2"
