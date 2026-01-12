@@ -85,9 +85,22 @@ fn test_complex_struct() {
 
   let dataset = store.query(ComplexStruct::sparql_query_algebra()).unwrap();
 
+  let resources = dataset.resources().cloned().collect::<Vec<_>>();
+
   let resource = <rdf_types::Term as rdf_types::FromIri>::from_iri(id);
 
   let actual = ComplexStruct::deserialize_subject(&(), &(), &dataset, None, &resource).unwrap();
 
   assert_eq!(expected, actual);
+
+  let objects = resources
+    .iter()
+    .filter_map(|resource| {
+      ComplexStruct::deserialize_subject(&(), &(), &dataset, None, resource).ok()
+    })
+    .collect::<Vec<_>>();
+
+  println!("{:?}", objects);
+
+  assert_eq!(objects.len(), 1);
 }
