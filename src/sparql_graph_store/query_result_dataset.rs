@@ -18,19 +18,16 @@ impl QueryResultDataset {
   }
 
   pub fn deserialize_subject<T: LinkedDataDeserializeSubject>(&self) -> Option<T> {
-    let resource_ids = self.dataset.resources().cloned().collect::<Vec<_>>();
-
-    resource_ids.iter().find_map(|resource_id| {
+    self.dataset.resources().find_map(|resource_id| {
       T::deserialize_subject(&(), &(), &self.dataset, None, resource_id).ok()
     })
   }
 
-  pub fn deserialize_subject_with_resource_ids<T: LinkedDataDeserializeSubject>(
+  pub fn deserialize_subject_with_resource_ids<'a, T: LinkedDataDeserializeSubject>(
     &self,
-    resource_ids: &[rdf_types::Term],
+    resource_ids: impl Iterator<Item = &'a rdf_types::Term>,
   ) -> Vec<T> {
     resource_ids
-      .iter()
       .filter_map(|resource_id| {
         T::deserialize_subject(&(), &(), &self.dataset, None, resource_id).ok()
       })
@@ -38,13 +35,16 @@ impl QueryResultDataset {
   }
 
   pub fn deserialize_subjects<T: LinkedDataDeserializeSubject>(&self) -> Vec<T> {
-    let resource_ids = self.dataset.resources().cloned().collect::<Vec<_>>();
-
-    resource_ids
-      .iter()
+    self
+      .dataset
+      .resources()
       .filter_map(|resource_id| {
         T::deserialize_subject(&(), &(), &self.dataset, None, resource_id).ok()
       })
       .collect()
+  }
+
+  pub fn resource_ids(&self) -> impl Iterator<Item = &rdf_types::Term> {
+    self.dataset.resources()
   }
 }

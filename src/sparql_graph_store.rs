@@ -70,7 +70,6 @@ pub trait SparqlGraphStore {
     update: spargebra::Update,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + '_;
 
-
   #[cfg(not(target_arch = "wasm32"))]
   fn query(
     &self,
