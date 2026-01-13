@@ -6,11 +6,13 @@ use sparesults::{QueryResultsFormat, QueryResultsParser, ReaderQueryResultsParse
 use spareval::QueryEvaluationError;
 use spargebra::{Query, Update};
 use std::io::Cursor;
+use reqwest::header::HeaderMap;
 
 #[derive(Clone)]
 pub struct SparqlClientDatabase {
   update_server_endpoint: String,
   query_server_endpoint: String,
+  header_map: HeaderMap,
 }
 
 impl SparqlClientDatabase {
@@ -18,6 +20,15 @@ impl SparqlClientDatabase {
     Self {
       update_server_endpoint: update_server_endpoint.to_owned(),
       query_server_endpoint: query_server_endpoint.to_owned(),
+      header_map: HeaderMap::default(),
+    }
+  }
+
+  pub fn new_with_header_map(update_server_endpoint: &str, query_server_endpoint: &str, header_map: HeaderMap) -> Self {
+    Self {
+      update_server_endpoint: update_server_endpoint.to_owned(),
+      query_server_endpoint: query_server_endpoint.to_owned(),
+      header_map,
     }
   }
 }
@@ -39,6 +50,7 @@ impl SparqlGraphStore for SparqlClientDatabase {
     let response = client
       .post(&url)
       .form(&update)
+      .headers(self.header_map.clone())
       .send()
       .await
       .map_err(|error| UpdateEvaluationError::Service(Box::new(error)))?;
@@ -70,6 +82,7 @@ impl SparqlGraphStore for SparqlClientDatabase {
     let response = client
       .post(&url)
       .form(&query)
+      .headers(self.header_map.clone())
       .send()
       .await
       .map_err(|error| QueryEvaluationError::Service(Box::new(error)))?;
