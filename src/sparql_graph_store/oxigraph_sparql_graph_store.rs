@@ -11,6 +11,7 @@ pub struct OxigraphSparqlGraphStore {
 }
 
 impl OxigraphSparqlGraphStore {
+  #[cfg(not(target_arch = "wasm32"))]
   /// Creates a new store backed by the given database directory.
   pub fn new(database_directory: &str) -> Self {
     let store = Store::open(database_directory).unwrap();

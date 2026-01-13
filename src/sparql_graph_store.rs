@@ -40,6 +40,7 @@ pub trait SparqlGraphStore {
     spargebra::Update::from_str(&update).map_err(|e| e.to_string())
   }
 
+  #[cfg(not(target_arch = "wasm32"))]
   fn default_insert(
     &self,
     data: &impl LinkedData<WithGenerator<Blank>>,
@@ -48,13 +49,37 @@ pub trait SparqlGraphStore {
     self.update(update)
   }
 
+  #[cfg(target_arch = "wasm32")]
+  fn default_insert(
+    &self,
+    data: &impl LinkedData<WithGenerator<Blank>>,
+  ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + '_ {
+    let update = Self::generate_prepared_sparql_update(data).unwrap();
+    self.update(update)
+  }
+
+  #[cfg(not(target_arch = "wasm32"))]
   fn update(
     &self,
     update: spargebra::Update,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + Send + '_;
 
+  #[cfg(target_arch = "wasm32")]
+  fn update(
+    &self,
+    update: spargebra::Update,
+  ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + '_;
+
+
+  #[cfg(not(target_arch = "wasm32"))]
   fn query(
     &self,
     query: spargebra::Query,
   ) -> impl Future<Output = Result<QueryResults, QueryEvaluationError>> + Send + '_;
+
+  #[cfg(target_arch = "wasm32")]
+  fn query(
+    &self,
+    query: spargebra::Query,
+  ) -> impl Future<Output = Result<QueryResults, QueryEvaluationError>> + '_;
 }
