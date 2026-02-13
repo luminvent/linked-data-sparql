@@ -136,6 +136,7 @@ macro_rules! to_construct_query_datatypes {
 }
 
 to_construct_query_datatypes!(
+  bool,
   u8,
   u16,
   u32,
@@ -144,6 +145,8 @@ to_construct_query_datatypes!(
   i16,
   i32,
   i64,
+  f32,
+  f64,
   String,
   xsd_types::DateTime
 );

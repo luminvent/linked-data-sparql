@@ -2,11 +2,11 @@ use super::{QueryResults, SparqlGraphStore};
 
 use oxigraph::sparql::UpdateEvaluationError;
 use oxttl::NTriplesParser;
+use reqwest::header::HeaderMap;
 use sparesults::{QueryResultsFormat, QueryResultsParser, ReaderQueryResultsParserOutput};
 use spareval::QueryEvaluationError;
 use spargebra::{Query, Update};
 use std::io::Cursor;
-use reqwest::header::HeaderMap;
 
 #[derive(Clone)]
 pub struct SparqlClientDatabase {
@@ -24,7 +24,11 @@ impl SparqlClientDatabase {
     }
   }
 
-  pub fn new_with_header_map(update_server_endpoint: &str, query_server_endpoint: &str, header_map: HeaderMap) -> Self {
+  pub fn new_with_header_map(
+    update_server_endpoint: &str,
+    query_server_endpoint: &str,
+    header_map: HeaderMap,
+  ) -> Self {
     Self {
       update_server_endpoint: update_server_endpoint.to_owned(),
       query_server_endpoint: query_server_endpoint.to_owned(),

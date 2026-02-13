@@ -11,22 +11,28 @@ async fn test_datatypes() {
   #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
   #[ld(prefix("ex" = "http://ex/"))]
   struct Datatypes {
-    // #[ld("ex:u8")]
-    // u8: u8,
-    // #[ld("ex:u16")]
-    // u16: u16,
-    // #[ld("ex:u32")]
-    // u32: u32,
+    #[ld("ex:bool")]
+    bool: bool,
+    #[ld("ex:u8")]
+    u8: u8,
+    #[ld("ex:u16")]
+    u16: u16,
+    #[ld("ex:u32")]
+    u32: u32,
     #[ld("ex:u64")]
     u64: u64,
-    // #[ld("ex:i8")]
-    // i8: i8,
-    // #[ld("ex:i16")]
-    // i16: i16,
-    // #[ld("ex:i32")]
-    // i32: i32,
-    // #[ld("ex:i64")]
-    // i64: i64,
+    #[ld("ex:i8")]
+    i8: i8,
+    #[ld("ex:i16")]
+    i16: i16,
+    #[ld("ex:i32")]
+    i32: i32,
+    #[ld("ex:i64")]
+    i64: i64,
+    #[ld("ex:f32")]
+    f32: f32,
+    #[ld("ex:f64")]
+    f64: f64,
     #[ld("ex:String")]
     string: String,
     #[ld("ex:DateTime")]
@@ -34,14 +40,17 @@ async fn test_datatypes() {
   }
 
   let expected = Datatypes {
-    // u8: 255,
-    // u16: 65535,
-    // u32: 4294967295,
+    bool: true,
+    u8: 255,
+    u16: 65535,
+    u32: 4294967295,
     u64: 18446744073709551615,
-    // i8: -128,
-    // i16: -32768,
-    // i32: -2147483648,
-    // i64: -9223372036854775808,
+    i8: -128,
+    i16: -32768,
+    i32: -2147483648,
+    i64: -9223372036854775808,
+    f32: std::f32::consts::PI,
+    f64: std::f64::consts::PI,
     string: "test string".to_owned(),
     date_time: xsd_types::DateTime::from_str("2024-01-15T12:30:45Z").unwrap(),
   };
@@ -60,6 +69,8 @@ async fn test_datatypes() {
   let actual = query_result_dataset
     .deserialize_subject::<Datatypes>()
     .unwrap();
+
+  println!("{actual:#?}");
 
   assert_eq!(expected, actual);
 }

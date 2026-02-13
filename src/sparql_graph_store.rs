@@ -46,6 +46,7 @@ pub trait SparqlGraphStore {
     data: &impl LinkedData<WithGenerator<Blank>>,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + Send + '_ {
     let update = Self::generate_prepared_sparql_update(data).unwrap();
+    println!("{}", update);
     self.update(update)
   }
 

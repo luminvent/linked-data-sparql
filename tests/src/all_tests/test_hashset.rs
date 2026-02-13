@@ -1,8 +1,8 @@
+use iref::IriBuf;
 use linked_data_next::{Deserialize, Serialize};
 use linked_data_sparql::sparql_graph_store::{OxigraphSparqlGraphStore, SparqlGraphStore};
 use linked_data_sparql::{Sparql, SparqlQuery};
 use std::collections::HashSet;
-use iref::IriBuf;
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
 #[ld(prefix("ex" = "http://ex/"))]
@@ -118,13 +118,13 @@ async fn test_struct_with_hashset_of_struct() {
     .resource_ids()
     .find(|resource_id| resource_id.to_string().as_str() == movie_id)
   {
-
-    let actual = query_result_dataset.deserialize_subject_with_resource_id::<Movie>(resource_id).unwrap();
+    let actual = query_result_dataset
+      .deserialize_subject_with_resource_id::<Movie>(resource_id)
+      .unwrap();
 
     println!("{:?}", actual);
     assert_eq!(expected, actual);
   } else {
-    assert!(false);
+    unreachable!()
   }
-
 }
