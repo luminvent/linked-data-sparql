@@ -12,11 +12,29 @@ use rdf_types::RdfDisplay;
 use rdf_types::generator::Blank;
 use rdf_types::interpretation::WithGenerator;
 use spareval::QueryEvaluationError;
+use std::fmt::Display;
 use std::str::FromStr;
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub enum UpdateAction {
+  #[default]
+  Insert,
+  Delete,
+}
+
+impl Display for UpdateAction {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      UpdateAction::Insert => write!(f, "INSERT"),
+      UpdateAction::Delete => write!(f, "DELETE"),
+    }
+  }
+}
 
 pub trait SparqlGraphStore {
   fn generate_prepared_sparql_update(
     data: &impl LinkedData<WithGenerator<Blank>>,
+    update_action: UpdateAction,
   ) -> Result<spargebra::Update, String> {
     let mut interpretation = WithGenerator::new((), Blank::new());
 
@@ -30,11 +48,11 @@ pub trait SparqlGraphStore {
 
     let update = format!(
       r#"
-      INSERT DATA {{
+      {} DATA {{
         {}
       }}
     "#,
-      triples
+      update_action, triples
     );
 
     spargebra::Update::from_str(&update).map_err(|e| e.to_string())
@@ -44,8 +62,9 @@ pub trait SparqlGraphStore {
   fn default_insert(
     &self,
     data: &impl LinkedData<WithGenerator<Blank>>,
+    update_action: UpdateAction,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + Send + '_ {
-    let update = Self::generate_prepared_sparql_update(data).unwrap();
+    let update = Self::generate_prepared_sparql_update(data, update_action).unwrap();
     println!("{}", update);
     self.update(update)
   }
