@@ -73,8 +73,9 @@ pub trait SparqlGraphStore {
   fn default_insert(
     &self,
     data: &impl LinkedData<WithGenerator<Blank>>,
+    update_action: UpdateAction,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + '_ {
-    let update = Self::generate_prepared_sparql_update(data).unwrap();
+    let update = Self::generate_prepared_sparql_update(data, update_action).unwrap();
     self.update(update)
   }
 
