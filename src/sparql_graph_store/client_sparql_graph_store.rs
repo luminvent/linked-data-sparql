@@ -13,6 +13,7 @@ pub struct SparqlClientDatabase {
   update_server_endpoint: String,
   query_server_endpoint: String,
   header_map: HeaderMap,
+  client: reqwest::Client,
 }
 
 impl SparqlClientDatabase {
@@ -21,6 +22,7 @@ impl SparqlClientDatabase {
       update_server_endpoint: update_server_endpoint.to_owned(),
       query_server_endpoint: query_server_endpoint.to_owned(),
       header_map: HeaderMap::default(),
+      client: reqwest::Client::new(),
     }
   }
 
@@ -33,13 +35,27 @@ impl SparqlClientDatabase {
       update_server_endpoint: update_server_endpoint.to_owned(),
       query_server_endpoint: query_server_endpoint.to_owned(),
       header_map,
+      client: reqwest::Client::new(),
+    }
+  }
+
+  pub fn new_with_header_map_and_client(
+    update_server_endpoint: &str,
+    query_server_endpoint: &str,
+    header_map: HeaderMap,
+    client: reqwest::Client,
+  ) -> Self {
+    Self {
+      update_server_endpoint: update_server_endpoint.to_owned(),
+      query_server_endpoint: query_server_endpoint.to_owned(),
+      header_map,
+      client,
     }
   }
 }
 
 impl SparqlGraphStore for SparqlClientDatabase {
   async fn update(&self, update: Update) -> Result<(), UpdateEvaluationError> {
-    let client = reqwest::Client::new();
     let url = self.update_server_endpoint.clone();
 
     #[derive(serde::Serialize)]
@@ -51,7 +67,7 @@ impl SparqlGraphStore for SparqlClientDatabase {
       update: update.to_string(),
     };
 
-    let response = client
+    let response = self.client
       .post(&url)
       .form(&update)
       .headers(self.header_map.clone())
@@ -60,7 +76,7 @@ impl SparqlGraphStore for SparqlClientDatabase {
       .map_err(|error| UpdateEvaluationError::Service(Box::new(error)))?;
 
     if !response.status().is_success() {
-      let message = response.text().await.unwrap();
+      let message = response.text().await.unwrap_or("Unknown error".to_owned());
 
       let error = std::io::Error::other(message);
 

@@ -65,7 +65,7 @@ pub trait SparqlGraphStore {
     update_action: UpdateAction,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + Send + '_ {
     let update = Self::generate_prepared_sparql_update(data, update_action).unwrap();
-    println!("{}", update);
+    log::trace!("{}", update);
     self.update(update)
   }
 
