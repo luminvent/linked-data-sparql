@@ -67,7 +67,8 @@ impl SparqlGraphStore for SparqlClientDatabase {
       update: update.to_string(),
     };
 
-    let response = self.client
+    let response = self
+      .client
       .post(&url)
       .form(&update)
       .headers(self.header_map.clone())
