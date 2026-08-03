@@ -18,7 +18,7 @@ readme = "README.md"
 
 [workspace.dependencies]
 iref = "3"
-linked-data-next = "0.1"
+linked-data-next = "0.2"
 rdf-types = "0.22"
 spargebra = "0.4"
 xsd-types = "0.9"
