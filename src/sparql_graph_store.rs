@@ -4,16 +4,15 @@ mod query_result_dataset;
 mod query_results;
 
 pub use client_sparql_graph_store::SparqlClientDatabase;
-use linked_data_next::LinkedData;
 use oxigraph::sparql::UpdateEvaluationError;
 pub use oxigraph_sparql_graph_store::OxigraphSparqlGraphStore;
+use oxrdf::Quad;
 pub use query_results::QueryResults;
-use rdf_types::RdfDisplay;
-use rdf_types::generator::Blank;
-use rdf_types::interpretation::WithGenerator;
 use spareval::QueryEvaluationError;
 use std::fmt::Display;
 use std::str::FromStr;
+
+use crate::ToRdfTerm;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum UpdateAction {
@@ -33,15 +32,15 @@ impl Display for UpdateAction {
 
 pub trait SparqlGraphStore {
   fn generate_prepared_sparql_update(
-    data: &impl LinkedData<WithGenerator<Blank>>,
+    data: &impl ToRdfTerm,
     update_action: UpdateAction,
   ) -> Result<spargebra::Update, String> {
-    let mut interpretation = WithGenerator::new((), Blank::new());
+    let mut quads: Vec<Quad> = Vec::new();
+    data.to_term(&mut quads);
 
-    let triples = linked_data_next::to_quads_with(&mut (), &mut interpretation, data)
-      .unwrap()
+    let triples = quads
       .iter()
-      .map(|quad| format!("{} .", quad.rdf_display()))
+      .map(|quad| format!("{quad} ."))
       .collect::<Vec<_>>()
       .join("\n")
       + "\n";
@@ -61,7 +60,7 @@ pub trait SparqlGraphStore {
   #[cfg(not(target_arch = "wasm32"))]
   fn default_insert(
     &self,
-    data: &impl LinkedData<WithGenerator<Blank>>,
+    data: &impl ToRdfTerm,
     update_action: UpdateAction,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + Send + '_ {
     let update = Self::generate_prepared_sparql_update(data, update_action).unwrap();
@@ -72,7 +71,7 @@ pub trait SparqlGraphStore {
   #[cfg(target_arch = "wasm32")]
   fn default_insert(
     &self,
-    data: &impl LinkedData<WithGenerator<Blank>>,
+    data: &impl ToRdfTerm,
     update_action: UpdateAction,
   ) -> impl Future<Output = Result<(), UpdateEvaluationError>> + '_ {
     let update = Self::generate_prepared_sparql_update(data, update_action).unwrap();

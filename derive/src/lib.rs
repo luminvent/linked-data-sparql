@@ -6,15 +6,29 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{DeriveInput, GenericArgument, PathArguments, Type};
 
+mod rdf_serde;
+
 #[proc_macro_error]
 #[proc_macro_derive(Sparql, attributes(ld))]
-pub fn derive_serialize(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_sparql(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let raw_input = syn::parse_macro_input!(item as DeriveInput);
   let linked_data_type: RdfType<Sparql> = RdfType::from_derive(raw_input);
 
   let mut output = TokenStream::new();
   linked_data_type.to_tokens(&mut output);
   output.into()
+}
+
+#[proc_macro_error]
+#[proc_macro_derive(Serialize, attributes(ld))]
+pub fn derive_serialize(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  rdf_serde::derive_to_rdf(item)
+}
+
+#[proc_macro_error]
+#[proc_macro_derive(Deserialize, attributes(ld))]
+pub fn derive_deserialize(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  rdf_serde::derive_from_rdf(item)
 }
 
 struct Sparql;

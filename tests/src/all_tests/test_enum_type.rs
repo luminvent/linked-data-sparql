@@ -1,8 +1,7 @@
-use linked_data_next::{Deserialize, Serialize};
 use linked_data_sparql::sparql_graph_store::{
   OxigraphSparqlGraphStore, SparqlGraphStore, UpdateAction,
 };
-use linked_data_sparql::{ConstructQuery, SparqlQuery, ToConstructQuery};
+use linked_data_sparql::{ConstructQuery, Deserialize, Serialize, SparqlQuery, ToConstructQuery};
 use spargebra::term::{NamedNode, Variable};
 
 // NOTE Type attribute for enum missing
@@ -10,10 +9,8 @@ use spargebra::term::{NamedNode, Variable};
 #[ignore]
 async fn test_enum_type() {
   #[derive(Serialize, Deserialize, Debug, PartialEq)]
-  #[ld(type = "http://ex/Type")]
   #[ld(prefix("ex" = "http://ex/"))]
   enum EnumType {
-    #[ld(type = "http://ex/Type")]
     #[ld("ex:left")]
     Left(String),
   }

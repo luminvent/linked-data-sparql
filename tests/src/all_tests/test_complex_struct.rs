@@ -1,9 +1,8 @@
-use iref::IriBuf;
-use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::reexport::oxrdf::NamedNode;
 use linked_data_sparql::sparql_graph_store::{
   OxigraphSparqlGraphStore, SparqlGraphStore, UpdateAction,
 };
-use linked_data_sparql::{Sparql, SparqlQuery};
+use linked_data_sparql::{Deserialize, Serialize, Sparql, SparqlQuery};
 
 #[tokio::test]
 async fn test_complex_struct() {
@@ -12,7 +11,7 @@ async fn test_complex_struct() {
   #[ld(prefix("ex" = "http://ex/"))]
   struct StructId {
     #[ld(id)]
-    id: IriBuf,
+    id: NamedNode,
 
     #[ld("ex:field")]
     value: String,
@@ -47,7 +46,7 @@ async fn test_complex_struct() {
   #[ld(prefix("ex" = "http://ex/"))]
   struct ComplexStruct {
     #[ld(id)]
-    id: IriBuf,
+    id: NamedNode,
     #[ld("ex:field_0_0")]
     field_0_0: String,
     #[ld("ex:struct_id")]
@@ -58,9 +57,9 @@ async fn test_complex_struct() {
     flatten_field: StructFlatten,
   }
 
-  let id = IriBuf::new("http://example.org/crazy".to_string()).unwrap();
+  let id = NamedNode::new("http://example.org/crazy").unwrap();
 
-  let sub_id = IriBuf::new("http://example.org/myBar".to_string()).unwrap();
+  let sub_id = NamedNode::new("http://example.org/myBar").unwrap();
 
   let expected = ComplexStruct {
     id: id.clone(),

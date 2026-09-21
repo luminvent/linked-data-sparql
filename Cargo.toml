@@ -17,9 +17,6 @@ description = "SPARQL query generation for linked data"
 readme = "README.md"
 
 [workspace.dependencies]
-iref = "3"
-linked-data-next = "0.2"
-rdf-types = "0.22"
 spargebra = "0.4"
 xsd-types = "0.9"
 
@@ -35,8 +32,6 @@ rdf12 = [
 ]
 
 [dependencies]
-langtag = "0.4.0"
-linked-data-next.workspace = true
 linked-data-sparql-derive = { path = "derive", version = "0.6" }
 log = "0.4.33"
 oxigraph = "0.5"
@@ -44,7 +39,6 @@ oxrdf = "0.3"
 oxrdfio = "0.2"
 oxttl = "0.2"
 reqwest = { version = "0.13.5", features = ["form"] }
-rdf-types.workspace = true
 serde = { version = "1", features = ["derive"] }
 spareval = "0.2"
 sparopt = "0.3"

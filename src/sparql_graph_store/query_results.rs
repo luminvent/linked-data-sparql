@@ -1,7 +1,5 @@
-use crate::rdf_type_conversions::IntoRdfTypes;
 use crate::sparql_graph_store::query_result_dataset::QueryResultDataset;
-use oxrdf::{Triple, Variable};
-use rdf_types::dataset::IndexedBTreeDataset;
+use oxrdf::{Dataset, GraphName, Quad, Triple, Variable};
 use sparesults::QuerySolution;
 
 #[derive(Debug)]
@@ -15,23 +13,27 @@ pub enum QueryResults {
 }
 
 impl QueryResults {
-  pub fn get_indexed_db_tree_dataset(&self) -> Option<IndexedBTreeDataset> {
+  pub fn get_dataset(&self) -> Option<Dataset> {
     if let Self::Triples(triples) = &self {
-      let mut expected_dataset = IndexedBTreeDataset::new();
-
-      triples.iter().for_each(|triple| {
-        expected_dataset.insert(triple.clone().into_rdf_types());
-      });
-
-      Some(expected_dataset)
+      Some(
+        triples
+          .iter()
+          .map(|triple| {
+            Quad::new(
+              triple.subject.clone(),
+              triple.predicate.clone(),
+              triple.object.clone(),
+              GraphName::DefaultGraph,
+            )
+          })
+          .collect(),
+      )
     } else {
       None
     }
   }
 
   pub fn get_query_result_dataset(&self) -> Option<QueryResultDataset> {
-    self
-      .get_indexed_db_tree_dataset()
-      .map(QueryResultDataset::new)
+    self.get_dataset().map(QueryResultDataset::new)
   }
 }

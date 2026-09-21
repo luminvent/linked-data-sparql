@@ -1,8 +1,7 @@
-use linked_data_next::{Deserialize, Serialize};
 use linked_data_sparql::sparql_graph_store::{
   OxigraphSparqlGraphStore, SparqlGraphStore, UpdateAction,
 };
-use linked_data_sparql::{Sparql, SparqlQuery};
+use linked_data_sparql::{Deserialize, Serialize, Sparql, SparqlQuery};
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
 #[ld(prefix("ex" = "http://ex/"))]

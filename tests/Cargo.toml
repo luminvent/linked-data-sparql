@@ -6,13 +6,9 @@ license.workspace = true
 
 [dependencies]
 linked-data-sparql = { path = "..", features = ["rdf12"] }
-iref.workspace = true
 spargebra.workspace = true
 xsd-types.workspace = true
-linked-data-next.workspace = true
-oxttl = "0.2"
 oxigraph = { version = "0.5", features = ["rdf-12"] }
-rdf-types.workspace = true
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

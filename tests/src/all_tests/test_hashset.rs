@@ -1,9 +1,8 @@
-use iref::IriBuf;
-use linked_data_next::{Deserialize, Serialize};
+use linked_data_sparql::reexport::oxrdf::{NamedNode, NamedOrBlankNode};
 use linked_data_sparql::sparql_graph_store::{
   OxigraphSparqlGraphStore, SparqlGraphStore, UpdateAction,
 };
-use linked_data_sparql::{Sparql, SparqlQuery};
+use linked_data_sparql::{Deserialize, Serialize, Sparql, SparqlQuery};
 use std::collections::HashSet;
 
 #[derive(Sparql, Serialize, Deserialize, Debug, PartialEq)]
@@ -91,7 +90,7 @@ async fn test_struct_with_hashset_of_struct() {
   #[ld(prefix("ex" = "http://ex/"))]
   struct Movie {
     #[ld(id)]
-    id: IriBuf,
+    id: NamedNode,
     #[ld("ex:title")]
     title: HashSet<Title>,
   }
@@ -99,7 +98,7 @@ async fn test_struct_with_hashset_of_struct() {
   let movie_id = "http://ex/movie/1";
 
   let expected = Movie {
-    id: IriBuf::new(movie_id.to_owned()).unwrap(),
+    id: NamedNode::new(movie_id).unwrap(),
     title: HashSet::from([
       Title {
         name: "My Title".to_string(),
@@ -125,9 +124,12 @@ async fn test_struct_with_hashset_of_struct() {
 
   let query_result_dataset = query_results.get_query_result_dataset().unwrap();
 
-  if let Some(resource_id) = query_result_dataset
-    .resource_ids()
-    .find(|resource_id| resource_id.to_string().as_str() == movie_id)
+  let movie_subject = NamedOrBlankNode::from(NamedNode::new(movie_id).unwrap());
+  let resource_ids = query_result_dataset.resource_ids();
+
+  if let Some(resource_id) = resource_ids
+    .iter()
+    .find(|resource_id| **resource_id == movie_subject)
   {
     let actual = query_result_dataset
       .deserialize_subject_with_resource_id::<Movie>(resource_id)
