@@ -77,8 +77,22 @@ impl TokenGenerator for Sparql {
   }
 
   fn generate_enum_tokens(r#enum: &RdfEnum<Self>, tokens: &mut TokenStream) {
-    let variants = &r#enum.variants;
     let ident = &r#enum.ident;
+
+    // A closed list of RDF resources is a leaf: each variant is identified by its own IRI, with
+    // no further predicates to construct, exactly like any other leaf datatype (`String`, `bool`, ...).
+    if r#enum.is_closed_list() {
+      tokens.extend(quote::quote! {
+        impl ::linked_data_sparql::ToConstructQuery for #ident {
+          fn to_query_with_binding(_binding_variable: ::linked_data_sparql::reexport::spargebra::term::Variable) -> ::linked_data_sparql::ConstructQuery {
+            ::linked_data_sparql::ConstructQuery::default()
+          }
+        }
+      });
+      return;
+    }
+
+    let variants = &r#enum.variants;
 
     tokens.extend(quote::quote! {
       impl ::linked_data_sparql::ToConstructQuery for #ident {
@@ -92,7 +106,12 @@ impl TokenGenerator for Sparql {
   }
 
   fn generate_variant_tokens(variant: &RdfVariant<Self>, tokens: &mut TokenStream) {
-    let ty = &variant.ty;
+    // Only reached for tagged-union enums (`generate_enum_tokens` returns early for a closed
+    // list), where every variant is guaranteed to wrap a single field.
+    let ty = variant
+      .ty
+      .as_ref()
+      .expect("tagged union enum variant is missing its inner type");
 
     let (iri_str, chained_object_with_predicate) = match &variant.predicate_path() {
       PredicatePath::Predicate(iri) => (iri.as_str(), quote::quote! {}),
@@ -159,7 +178,18 @@ impl TokenGenerator for Sparql {
 }
 
 fn type_for_to_query_with_binding(field: &RdfField<Sparql>) -> Type {
-  composed_inner_type(field).unwrap_or(field.ty.clone())
+  // A `Vec<T>` is serialized as an RDF Collection rooted at the field's own binding, not as a
+  // repeated `T` value, so `ToConstructQuery` must be driven by `Vec<T>` itself (which knows how
+  // to walk the `rdf:first`/`rdf:rest` chain), not by the unwrapped item type `T`.
+  if is_vec(field) {
+    field.ty.clone()
+  } else {
+    composed_inner_type(field).unwrap_or(field.ty.clone())
+  }
+}
+
+fn is_vec(field: &RdfField<Sparql>) -> bool {
+  matches!(&field.ty, Type::Path(type_path) if type_path.path.segments.first().is_some_and(|segment| segment.ident == "Vec"))
 }
 
 fn left_join_required(field: &RdfField<Sparql>) -> bool {

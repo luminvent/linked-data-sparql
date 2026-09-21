@@ -1,4 +1,4 @@
-use linked_data_core::{PredicatePath, RdfEnum, RdfField, RdfStruct, RdfType};
+use linked_data_core::{PredicatePath, RdfEnum, RdfField, RdfStruct, RdfType, RdfVariant};
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::{DeriveInput, Fields, GenericArgument, Index, PathArguments, Type};
@@ -112,7 +112,11 @@ pub fn derive_to_rdf(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
       let RdfType::Enum(rdf_enum) = RdfType::<Sparql>::from_derive(raw_input.clone()) else {
         unreachable!()
       };
-      generate_enum_to_rdf(&rdf_enum, &variant_idents)
+      if rdf_enum.is_closed_list() {
+        generate_closed_enum_to_rdf(&rdf_enum, &variant_idents)
+      } else {
+        generate_enum_to_rdf(&rdf_enum, &variant_idents)
+      }
     }
     syn::Data::Union(_) => {
       proc_macro_error::abort_call_site!("union types are not supported")
@@ -138,7 +142,11 @@ pub fn derive_from_rdf(item: proc_macro::TokenStream) -> proc_macro::TokenStream
       let RdfType::Enum(rdf_enum) = RdfType::<Sparql>::from_derive(raw_input.clone()) else {
         unreachable!()
       };
-      generate_enum_from_rdf(&rdf_enum, &variant_idents)
+      if rdf_enum.is_closed_list() {
+        generate_closed_enum_from_rdf(&rdf_enum, &variant_idents)
+      } else {
+        generate_enum_from_rdf(&rdf_enum, &variant_idents)
+      }
     }
     syn::Data::Union(_) => {
       proc_macro_error::abort_call_site!("union types are not supported")
@@ -146,6 +154,91 @@ pub fn derive_from_rdf(item: proc_macro::TokenStream) -> proc_macro::TokenStream
   };
 
   output.into()
+}
+
+/// The IRI of a closed-list enum variant. Unit variants can only ever carry a plain
+/// `PredicatePath::Predicate` (a `ChainedPath` needs an attribute on an inner field, which unit
+/// variants don't have), so this always matches.
+fn closed_variant_iri(variant: &RdfVariant<Sparql>) -> &str {
+  match variant.predicate_path() {
+    PredicatePath::Predicate(iri) => iri.as_str(),
+    PredicatePath::ChainedPath { .. } => {
+      unreachable!("a unit variant cannot carry a chained path")
+    }
+  }
+}
+
+fn generate_closed_enum_to_rdf(
+  rdf_enum: &RdfEnum<Sparql>,
+  variant_idents: &[syn::Ident],
+) -> TokenStream {
+  let ident = &rdf_enum.ident;
+  let variants = &rdf_enum.variants;
+
+  let match_arms = variants
+    .iter()
+    .zip(variant_idents)
+    .map(|(variant, variant_ident)| {
+      let iri_str = closed_variant_iri(variant);
+      quote! {
+        #ident::#variant_ident => ::linked_data_sparql::reexport::oxrdf::NamedNode::new_unchecked(#iri_str),
+      }
+    });
+
+  quote! {
+    impl ::linked_data_sparql::ToRdfTerm for #ident {
+      fn to_term(
+        &self,
+        _quads: &mut Vec<::linked_data_sparql::reexport::oxrdf::Quad>,
+      ) -> ::linked_data_sparql::reexport::oxrdf::Term {
+        let named_node = match self {
+          #(#match_arms)*
+        };
+        ::linked_data_sparql::reexport::oxrdf::Term::from(named_node)
+      }
+    }
+  }
+}
+
+fn generate_closed_enum_from_rdf(
+  rdf_enum: &RdfEnum<Sparql>,
+  variant_idents: &[syn::Ident],
+) -> TokenStream {
+  let ident = &rdf_enum.ident;
+  let variants = &rdf_enum.variants;
+
+  let match_arms = variants
+    .iter()
+    .zip(variant_idents)
+    .map(|(variant, variant_ident)| {
+      let iri_str = closed_variant_iri(variant);
+      quote! {
+        #iri_str => Ok(#ident::#variant_ident),
+      }
+    });
+
+  quote! {
+    impl ::linked_data_sparql::FromRdfTerm for #ident {
+      fn from_term(
+        _dataset: &::linked_data_sparql::reexport::oxrdf::Dataset,
+        term: &::linked_data_sparql::reexport::oxrdf::Term,
+      ) -> Result<Self, ::linked_data_sparql::DeserializeError> {
+        let named_node = match term {
+          ::linked_data_sparql::reexport::oxrdf::Term::NamedNode(named_node) => named_node,
+          _ => {
+            return Err(::linked_data_sparql::DeserializeError::UnexpectedTerm {
+              expected: "named node",
+            });
+          }
+        };
+
+        match named_node.as_str() {
+          #(#match_arms)*
+          other => Err(::linked_data_sparql::DeserializeError::InvalidLiteral(other.to_owned())),
+        }
+      }
+    }
+  }
 }
 
 fn generate_struct_to_rdf(
@@ -249,7 +342,19 @@ fn generate_field_write(field: &RdfField<Sparql>, name: &FieldName) -> TokenStre
         ));
       }
     },
-    Cardinality::Vec | Cardinality::HashSet => quote! {
+    // A `Vec` is ordered and may contain duplicates, so it's written as an RDF Collection, the
+    // only one of the two standard RDF list shapes that preserves both.
+    Cardinality::Vec => quote! {
+      ::linked_data_sparql::rdf_serde_support::write_collection(
+        subject,
+        &::linked_data_sparql::reexport::oxrdf::NamedNode::new_unchecked(#predicate_str),
+        &self.#name,
+        quads,
+      );
+    },
+    // A `HashSet` has neither order nor duplicates, so a plain multi-valued property (repeated
+    // `subject predicate value` triples) already represents it exactly.
+    Cardinality::HashSet => quote! {
       for value in &self.#name {
         let term = ::linked_data_sparql::ToRdfTerm::to_term(value, quads);
         quads.push(::linked_data_sparql::reexport::oxrdf::Quad::new(
@@ -452,7 +557,14 @@ fn generate_enum_from_rdf(
   let variants = &rdf_enum.variants;
 
   let attempts = variants.iter().zip(variant_idents).map(|(variant, variant_ident)| {
-    let ty = inner_type(&variant.ty);
+    // Only reached for tagged-union enums (closed lists take the `generate_closed_enum_*` path),
+    // where every variant is guaranteed to wrap a single field.
+    let ty = inner_type(
+      variant
+        .ty
+        .as_ref()
+        .expect("tagged union enum variant is missing its inner type"),
+    );
     match variant.predicate_path() {
       PredicatePath::Predicate(iri) => {
         let iri_str = iri.as_str();

@@ -2,8 +2,9 @@ use crate::construct_query::left_join::LeftJoin;
 use crate::to_construct_query::ToConstructQuery;
 use and::And;
 use join::Join;
+use oxrdf::vocab::rdf;
 use spargebra::Query;
-use spargebra::algebra::{Expression, GraphPattern};
+use spargebra::algebra::{Expression, GraphPattern, PropertyPathExpression};
 use spargebra::term::{NamedNode, NamedNodePattern, TermPattern, TriplePattern, Variable};
 use union::Union;
 
@@ -158,8 +159,38 @@ impl<T: ToConstructQuery> ToConstructQuery for Option<T> {
 }
 
 impl<T: ToConstructQuery> ToConstructQuery for Vec<T> {
-  fn to_query_with_binding(variable: Variable) -> ConstructQuery {
-    T::to_query_with_binding(variable)
+  /// Reconstructs an RDF Collection: the `rdf:first`/`rdf:rest` linked list rooted at
+  /// `binding_variable` and terminated by `rdf:nil`, including each item's own structure.
+  fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+    let node = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
+    let item = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
+    let rest = Variable::new_unchecked(spargebra::term::BlankNode::default().into_string());
+
+    let rdf_first = NamedNode::from(rdf::FIRST);
+    let rdf_rest = NamedNode::from(rdf::REST);
+
+    // Every list node, however far down the chain, is reachable from the head by zero or more
+    // `rdf:rest` hops; this doesn't itself construct anything, it only binds `node`.
+    let reachable = ConstructQuery {
+      construct_template: Vec::new(),
+      where_pattern: GraphPattern::Path {
+        subject: binding_variable.into(),
+        path: PropertyPathExpression::ZeroOrMore(Box::new(PropertyPathExpression::NamedNode(
+          rdf_rest.clone(),
+        ))),
+        object: node.clone().into(),
+      },
+    };
+
+    let walk = reachable
+      .join(ConstructQuery::new(node.clone(), rdf_first, item.clone()))
+      .join(ConstructQuery::new(node, rdf_rest, rest))
+      .join(T::to_query_with_binding(item));
+
+    // An empty list is just `binding_variable` bound to `rdf:nil`, with no `rdf:first`/`rdf:rest`
+    // node to walk; left-joining against the always-matching identity pattern keeps that case
+    // from vanishing instead of failing the whole query.
+    ConstructQuery::default().left_join(walk)
   }
 }
 

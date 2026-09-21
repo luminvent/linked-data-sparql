@@ -38,6 +38,7 @@ use spargebra::Query;
 pub mod rdf_serde_support {
   pub use crate::rdf_serde::{
     fresh_subject, hash_set_field, objects_for, optional_field, single_field, vec_field,
+    write_collection,
   };
 }
 

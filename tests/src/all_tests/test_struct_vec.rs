@@ -43,9 +43,8 @@ async fn test_struct_with_vec_2_values() {
     .unwrap();
 
   println!("{:?}", actual);
-  assert_eq!(expected.field_0, actual.field_0);
-  assert!(actual.field_1.contains(&"one".to_string()));
-  assert!(actual.field_1.contains(&"two".to_string()));
+  // `field_1` is written and read back as an RDF Collection, so order is preserved end to end.
+  assert_eq!(expected, actual);
 }
 
 #[tokio::test]
@@ -127,5 +126,5 @@ async fn test_struct_with_vec_1_value() {
     .deserialize_subject::<MainStruct>()
     .unwrap();
 
-  assert_eq!(expected.field_0, actual.field_0);
+  assert_eq!(expected, actual);
 }

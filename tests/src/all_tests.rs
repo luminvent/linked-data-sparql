@@ -1,8 +1,8 @@
+mod test_closed_enum;
 mod test_complex_struct;
 mod test_datatypes;
 mod test_enum;
 mod test_enum_blank_node;
-mod test_enum_type;
 mod test_hashset;
 mod test_struct;
 mod test_struct_flatten;
@@ -11,3 +11,4 @@ mod test_struct_id;
 mod test_struct_type;
 mod test_struct_vec;
 mod test_struct_with_option;
+mod test_vec_collection;
