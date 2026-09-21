@@ -106,7 +106,7 @@ impl ConstructQuery {
 impl From<ConstructQuery> for Query {
   fn from(value: ConstructQuery) -> Self {
     let mut template = value.construct_template.clone();
-    template.sort_by(|a, b| a.subject.to_string().cmp(&b.subject.to_string()));
+    template.sort_by_key(|a| a.subject.to_string());
 
     Query::Construct {
       template,
