@@ -38,7 +38,7 @@ impl TokenGenerator for Sparql {
     let fields = &rdf_struct.fields;
 
     let type_tokens =
-      rdf_struct.type_iri().map(|iri| iri.clone().into_string())
+      rdf_struct.type_iri().map(|iri| iri.to_string())
         .map(|type_iri| {
           quote::quote! {
             let construct_query = construct_query.join_with(

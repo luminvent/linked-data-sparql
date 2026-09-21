@@ -10,8 +10,8 @@ description = "SPARQL query generation for linked data"
 proc-macro = true
 
 [dependencies]
-linked-data-core = "0.1"
-proc-macro-error = "1"
-proc-macro2 = "1"
-syn = { version = "2", features = ["visit"] }
-quote = "1"
+linked-data-core = "0.2.0"
+proc-macro-error = "1.0.4"
+proc-macro2 = "1.0.107"
+syn = { version = "3.0.6", features = ["visit"] }
+quote = "1.0.47"
