@@ -3,6 +3,7 @@ mod test_complex_struct;
 mod test_datatypes;
 mod test_enum;
 mod test_enum_blank_node;
+mod test_filter;
 mod test_hashset;
 mod test_struct;
 mod test_struct_flatten;

@@ -6,6 +6,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{DeriveInput, GenericArgument, PathArguments, Type};
 
+mod filter;
 mod rdf_serde;
 
 #[proc_macro_error]
@@ -17,6 +18,12 @@ pub fn derive_sparql(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let mut output = TokenStream::new();
   linked_data_type.to_tokens(&mut output);
   output.into()
+}
+
+#[proc_macro_error]
+#[proc_macro_derive(SparqlFilter, attributes(ld, filter))]
+pub fn derive_sparql_filter(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  filter::derive_sparql_filter(item)
 }
 
 #[proc_macro_error]
@@ -186,6 +193,10 @@ fn type_for_to_query_with_binding(field: &RdfField<Sparql>) -> Type {
   } else {
     composed_inner_type(field).unwrap_or(field.ty.clone())
   }
+}
+
+fn is_option(ty: &Type) -> bool {
+  matches!(ty, Type::Path(type_path) if type_path.path.segments.first().is_some_and(|segment| segment.ident == "Option"))
 }
 
 fn is_vec(field: &RdfField<Sparql>) -> bool {

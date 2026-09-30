@@ -17,12 +17,16 @@
 //! ```
 
 mod construct_query;
+mod filter;
 mod rdf_serde;
 pub mod sparql_graph_store;
 mod sparql_query;
 mod to_construct_query;
 
 pub use crate::construct_query::ConstructQuery;
+pub use crate::filter::{
+  Condition, FilterMode, Operator, PredicateFilter, ToSparqlFilter, ValueFunction,
+};
 pub use crate::rdf_serde::{
   DeserializeError, FromRdfSubject, FromRdfTerm, ToRdfTerm, WriteRdfQuads,
 };
@@ -31,8 +35,13 @@ pub use crate::to_construct_query::ToConstructQuery;
 pub use construct_query::and::And;
 pub use construct_query::join::Join;
 pub use construct_query::union::Union;
-pub use linked_data_sparql_derive::{Deserialize, Serialize, Sparql};
+pub use linked_data_sparql_derive::{Deserialize, Serialize, Sparql, SparqlFilter};
 use spargebra::Query;
+
+#[doc(hidden)]
+pub mod filter_support {
+  pub use crate::filter::{filter_value, now, typed_filter_value};
+}
 
 #[doc(hidden)]
 pub mod rdf_serde_support {

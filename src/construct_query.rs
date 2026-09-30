@@ -90,10 +90,14 @@ impl ConstructQuery {
   }
 
   pub fn filter_variable(self, variable: Variable, id: NamedNode) -> Self {
-    let expr = Expression::Equal(
+    self.filter(Expression::Equal(
       Box::new(Expression::Variable(variable)),
       Box::new(Expression::NamedNode(id)),
-    );
+    ))
+  }
+
+  /// Wraps the `WHERE` pattern in `FILTER(expr)`, leaving the construct template untouched.
+  pub fn filter(self, expr: Expression) -> Self {
     Self {
       construct_template: self.construct_template,
       where_pattern: GraphPattern::Filter {
