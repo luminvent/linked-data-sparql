@@ -17,16 +17,16 @@ description = "SPARQL query generation for linked data"
 readme = "README.md"
 
 [workspace.dependencies]
-spargebra = "0.4"
-xsd-types = "0.9"
+xsd-types = "0.10"
 
 [features]
 rdf12 = [
+    "oxigraph/rdf-12",
     "oxrdf/rdf-12",
     "oxrdfio/rdf-12",
+    "oxrdfxml/rdf-12",
     "oxttl/rdf-12",
     "spareval/sparql-12",
-    "sparopt/sparql-12",
     "sparesults/sparql-12",
     "spargebra/sparql-12",
 ]
@@ -36,12 +36,12 @@ linked-data-sparql-derive = { path = "derive", version = "0.8" }
 log = "0.4.33"
 oxigraph = "0.5"
 oxrdf = "0.3"
-oxrdfio = "0.2"
+oxrdfio = "0.2.7"
+oxrdfxml = "0.2.5"
 oxttl = "0.2"
 reqwest = { version = "0.13.5", features = ["form"] }
 serde = { version = "1", features = ["derive"] }
 spareval = "0.2"
-sparopt = "0.3"
 sparesults = "0.3"
-spargebra.workspace = true
+spargebra = "0.4"
 xsd-types.workspace = true
